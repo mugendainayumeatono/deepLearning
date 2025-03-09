@@ -1,0 +1,45 @@
+https://www.deepfakevfx.com/guides/deepfacelab-wiki/
+
+python环境3.7
+
+1_clear_workspace.sh
+执行以后自动创建工作目录 /workspace 以及 /workspace下面的各个子目录
+
+2_extract_image_from_data_src.sh
+ 视频转图片，如果训练数据已经都是图片，没有视频了，这步跳过
+
+3_extract_image_from_data_dst.sh
+把要替换的视频也转成图片，和2不一样的是，这个脚本把所有帧装成图片，而第二部只是抽取一部分帧
+
+3.1_denoise_data_dst_images.sh
+降噪，视频质量好的话不要这一步
+
+4_data_src_extract_faces_S3FD.sh
+切脸，把训练数据中的脸单独切出来，保存成只有脸的文件
+下载那个模型，可以再试试看
+
+4_data_src_extract_faces_MANUAL.sh
+用于手动切脸，应该不必要，用4) data_src faceset extract.bat自动切就可以了
+
+切完脸，手动清洗数据，删掉不要图
+
+4.2_data_src_sort.sh
+为了方便检查切出来的脸，可以对切出来的图进行排序
+
+其余的4.2_data_src_util_xxx文件是一些工具，可以根据情况看需不需要用
+4.2) data_src util recover original filename.bat 排序的时候会按顺序重命名文件，用这个脚本恢复原本的文件名
+4.2_data_src_util_add_landmarks_debug_images.sh debug用的，会把识别人脸时候的landmarks 标出来
+4.2_data_src_util_faceset_enhance.sh 扩大人脸图片
+4.2_data_src_util_faceset_metadata_save.sh 保持图片元数据，主要是长宽
+4.2) data_src util faceset resize.bat 修改文件长宽
+4.2_data_src_util_faceset_metadata_restore.sh 修改完图片的长宽以后，如果有保存元数，可以恢复回去
+4.2_data_src_util_faceset_pack.sh
+4.2_data_src_util_faceset_unpack.sh 把所有图片打包成一个文件，或者解包出来
+
+5_data_dst_extract_faces_S3FD.sh
+提取目标人脸
+和第4步类似，脚本文件也差不多
+使用脚本文件辅助清洗数据，删除不要的脸，和4不一样的是，因为是目标图片，所以被删掉的脸，最终不会被替换
+
+
+

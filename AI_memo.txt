@@ -1,0 +1,427 @@
+https://gpu.ai-galaxy.cn/console/dashboard
+
+参数
+------------------------------------------------------
+迭代次数，迭代次数过少，可能导致画面上残留马赛克
+cfg 遵守提示词的严格层度，太严格会过拟合，太宽松生成的图形会很抽象
+denoise 不知到，最大1，太小会导致生成一张只有噪点的图
+scheduler 不知到
+sampler 扩散方法，见下文
+
+扩散方法特性
+------------------------------------------------------
+
+Euler a 低分辨率下边缘非常清晰，画漫画很有效
+
+DPM adaptive step只要1就能生成正常图片,但是速度不见得快
+其他DPM没什么区别
+
+sd3特性
+目前不支持换vau，不支持lora
+用Heun，CFG6.5 step25，提升step可能需要同时提升CFG
+
+sd3.5特性
+待测试
+
+安全性测试
+------------------------------------------------------
+CounterfeitV25_25 安全
+majicmixRealistic_v7 安全
+SD3 安全
+SD3.5L不一定安全
+其余不安全
+
+
+SD3 加载测试
+------------------------------------------------------
+stoiqoNewrealityFLUXSD35_sd35Prealpha 加载不了  (这个自带clip和t5xxl  以下都要单独加载clip和t5xxl) 
+stoiqoNewrealityFLUXSD35_sd35Prealpha0000 加载不了
+sd3.5_large_turbo 加载不了
+sd3.5_large 加载不了
+sd3.5_medium 这个可以
+
+stableDiffusion35Fp8_v35Large fp8版本的large 可以
+使用comfyui自带的load diffusion  mode加载
+另外需要单独加载vae -> diffusion_pytorch_model.safetensors
+但是生成不了1080P会爆显存
+
+测试计划
+------------------------------------------------------
+sd3.5 L 8fps
+试一下 Set vram state to: DISABLED -> enable\
+和
+--use-split-cross-attention
+看是否能生成1080p
+
+comfyUI
+------------------------------------------------------
+KSampling(K采样器) 输出的是一个Latent(潜在空间)
+Latent需要用VAE解码之后，得到的才是一张图片
+同样的，加载一张图片以后，需要VAE编码操作，得到一个Latent，然后才能进行之后的操作
+
+
+------------------------------------------------------
+4320p (8k)：7680x4320
+2160p (4K)：3840x2160
+1440p (2k)：2560x1440
+1080p（高清）：1920x1080
+720p（高清）：1280x720
+480p（标清）：854x480
+360p（标清）：640x360
+240p（标清）：426x240
+------------------------------------------------------
+
+
+训练
+------------------------------------------------------
+sd-scripts
+
+远程机上训练：
+Ubuntu 22.04
+python3.10
+
+pip3 install torch==2.4.0 torchvision==0.19.0 --index-url https://download.pytorch.org/whl/cu124
+ pip install -r requirements.txt 
+
+问题
+/usr/bin/ld: cannot find -lcuda: No such file or directory
+找不到64位的cuda库
+64位库在这 /usr/local/cuda-12.4/targets/x86_64-linux/lib/stubs/libcuda.so
+解决
+ln -s /usr/local/cuda-12.4/targets/x86_64-linux/lib/stubs/libcuda.so libcuda.so
+
+问题
+ModuleNotFoundError: No module named 'triton.ops'
+默认版本是
+triton                    3.2.0                    pypi_0    pypi
+解决
+pip install --force-reinstall -v "triton==3.1.0"
+
+--resume 训练的时候
+KeyError: 'step'
+Traceback (most recent call last):
+  File "/root/vipuser/miniconda3/envs/sd-scripts/bin/accelerate", line 8, in <module>
+    sys.exit(main())
+
+accelerate降到0.31.0版即可
+可能需要再次确认triton版本应该是3.1.0
+解决
+pip install accelerate==0.31.0
+
+
+
+LoRA训练可以用下面3种方式
+DreamBooth/class+identifier   指定一个关键字，prompts中包含这个关键字，就让LoRA生效
+DreamBooth/caption 给每个文件指定一个描述文件，描述文件可以用工具生成
+fine tuning 和上面的区别就是dataset中指定数据的方式和上面不一样
+
+caption
+运行 finetune 文件夹中的 make_captions.py
+python finetune\make_captions.py --batch_size <バッチサイズ> <教師データフォルダ>
+即可为没张图生成一个caption文件，文件内容详细描述了这张图
+
+也可以用DeepDanbooru 给图像打标签，生成caption文件
+https://github.com/KichangKim/DeepDanbooru
+
+还可以用WD14Tagger
+这个是stable-diffusion-webui使用的工具，sd-scripts集成了这个工具，用下面的命令
+python tag_images_by_wd14_tagger.py --batch_size <バッチサイズ> <教師データフォルダ>
+
+
+训练时DreamBooth和fine tuning2种方法可以同时使用
+在同一个toml文件里面分别写2个[[datasets]]就可以
+
+
+训练用的图片可以是任意分辨率
+在toml文件里面指定下面可选参数，训练时将会自动将图片按分辨率分桶，每个桶分别训练
+注意都是可选参数，都可以不设定，只能设在[general]和[[datasets]]，不能设在[[datasets.subsets]]
+
+batch_size 指定同时训练多少个数据，设置比较大的值会消息更多显存,训练速度变块,用RTX3080设置为16，消耗显存10G
+		“batch×steps”= 训练将要用到多少图片，batch约大消耗显存越多
+		也就是同样的学习率和steps，要用更多的图片训练，就要增加batch大小
+		拟合度=steps×learning_rate 据说通常用比较小的learning_rate（例如 1e-6），比较多的step训练效果好
+
+bucket_no_upscale 不懂
+bucket_reso_steps 按分辨率分桶时，就可以按 64 像素的增量，在垂直和水平方向上调整和创建训练分辨率(分桶)
+				像素的增量默认64，可以用这个参数修改成其他值
+enable_bucket	true 是否启用按分辨率分桶训练功能
+max_bucket_reso 分桶训练时，接受的最大分辨率
+min_bucket_reso 分桶训练时，接受的最小分辨率
+resolution 不使用按分辨率分桶训练时，所有训练用图片要一样大小，用这个参数指定图标的分辨率，不管是否分桶，这个参数必须指定
+
+以下参数也可以设在[[datasets.subsets]]
+is_reg 是否启用图片正则化，如果启用，没张图都必须有一个caption文件
+		caption文件后缀可以改
+caption_extension 指定caption文件后缀
+num_repeats 一个subsets重复训练的次数，会覆盖启动参数--dataset_repeats 通常使用正则化的时候才需要
+
+其余参数见
+https://github.com/kohya-ss/sd-scripts/blob/sd3/docs/config_README-ja.md
+
+据传，训练步骤在1000步左右能取得比较明显的效果
+
+学习率
+--learning_rate 1e-4至1e-3
+https://rentry.org/59xed3#the-unet-and-its-blocks
+网络包含Rank和Alpha2个参数set "cmd=!cmd! --network_dim 64" set "cmd=!cmd! --network_alpha 1"
+学习内容越复杂 Rank的值要越高，最高设到128就差不多了
+简单的训练一个角色，据说16就够了
+rank越大训练时间越长，生成的lora体积越大
+Alpha 搞不太懂，大概是Alpha/rank 的比值越小lora的权重越大
+alpha减小会导致learning_rate的效果减少，如果Alpha/rank = 0.5 等于learning_rate的效果只有一半
+所以改变Alpha/rank 要考虑同步改变learning_rate
+
+songyuqi_beta_1.safetensors 适合权重0.5
+songyuqi_beta_2.safetensors 怀疑过拟合
+
+iorimoe_beta.safetensors
+训练参数
+--learning_rate 1e-4
+--flip_aug
+--face_crop_aug_range 2,4
+fp16
+networks.lora_sd3
+  num train images * repeats / 学習画像の数×繰り返し回数: 1553
+  num reg images / 正則化画像の数: 0
+  num batches per epoch / 1epochのバッチ数: 99
+  num epochs / epoch数: 100
+  batch size per device / バッチサイズ: 16
+  gradient accumulation steps / 勾配を合計するステップ数 = 1
+  total optimization steps / 学習ステップ数: 9900
+
+iorimoe_beta2.safetensors
+训练参数
+--learning_rate 1e-6**
+fp16
+networks.lora_sd3
+  num train images * repeats / 学習画像の数×繰り返し回数: 1553
+  num reg images / 正則化画像の数: 0
+  num batches per epoch / 1epochのバッチ数: 99
+  num epochs / epoch数: 100
+  batch size per device / バッチサイズ: 16
+  gradient accumulation steps / 勾配を合計するステップ数 = 1
+  total optimization steps / 学習ステップ数: 9900
+失败
+
+iorimoe_beta3.safetensors
+--learning_rate 2e-6**
+fp16
+networks.lora_sd3
+权重1的时候效果还可以
+
+yuiri_beta1
+200张图
+set "cmd=!cmd! --learning_rate 2e-3"
+set "cmd=!cmd! --network_dim 64"
+set "cmd=!cmd! --network_alpha 1"
+set "cmd=!cmd! --mixed_precision fp16"
+set "cmd=!cmd! --save_precision fp16"
+set "cmd=!cmd! --full_fp16"
+set "cmd=!cmd! --flip_aug"
+3080 oom了，待测试
+根据训练时的sample 第70代好像还可以
+
+yuiri_beta2
+200张图
+set "cmd=!cmd! --learning_rate 4e-4"
+set "cmd=!cmd! --network_dim 16"
+set "cmd=!cmd! --network_alpha 1"
+set "cmd=!cmd! --mixed_precision fp16"
+set "cmd=!cmd! --save_precision fp16"
+set "cmd=!cmd! --full_fp16"
+:: -------test parameter-------
+set "cmd=!cmd! --flip_aug"
+
+yuiri_beta3
+200张图
+set "cmd=!cmd! --mixed_precision fp16"
+set "cmd=!cmd! --save_precision fp16"
+set "cmd=!cmd! --full_fp16"
+set "cmd=!cmd! --learning_rate 8e-4"
+set "cmd=!cmd! --network_dim 16"
+set "cmd=!cmd! --network_alpha 1"
+set "cmd=!cmd! --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=0.1' 'down_lr_weight=sine-.5' 'mid_lr_weight=2' 'up_lr_weight=cosine+.5'"
+
+yuiri_beta4
+200张图
+set "cmd=!cmd! --mixed_precision fp16"
+set "cmd=!cmd! --save_precision fp16"
+set "cmd=!cmd! --full_fp16"
+set "cmd=!cmd! --learning_rate 8e-4"
+set "cmd=!cmd! --network_dim 16"
+set "cmd=!cmd! --network_alpha 1"
+set "cmd=!cmd! --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=0.1' 'down_lr_weight=sine-.5' 'mid_lr_weight=2' 'up_lr_weight=cosine+1'"
+挺成功的
+
+yuiri_beta5
+200张图
+set "cmd=!cmd! --mixed_precision fp16"
+set "cmd=!cmd! --save_precision fp16"
+set "cmd=!cmd! --full_fp16"
+set "cmd=!cmd! --learning_rate 1.6e-3"
+set "cmd=!cmd! --network_dim 32"
+set "cmd=!cmd! --network_alpha 1"
+set "cmd=!cmd! --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=0.1' 'down_lr_weight=sine-.5' 'mid_lr_weight=2' 'up_lr_weight=cosine+1'"
+
+flux 训练200张图
+载入模型的时候内存峰值用到60G左右
+batch16 爆显存
+batch8 显存用量约32G
+必须使用 --mixed_precision bf16 --save_precision bf16 否则会avr_loss=nan
+
+yuiri_flux_beta1
+cmd="$cmd --mixed_precision bf16"
+cmd="$cmd --save_precision bf16"
+cmd="$cmd --full_bf16"  # Uncomment to enable full_fp16
+cmd="$cmd --learning_rate 1e-5"
+cmd="$cmd --network_dim 16"
+cmd="$cmd --network_alpha 1"
+cmd="$cmd --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=0.1' 'down_lr_weight=sine-.5' 'mid_lr_weight=2' 'up_lr_weight=cosine+1'"
+
+========================================================
+生成视频
+https://github.com/hpcaitech/Open-Sora
+
+混元
+https://github.com/Tencent/HunyuanVideo/blob/main/README_zh.md
+只开源了文生视频，官方生成的视频有水印
+
+https://github.com/MyNiuuu/MOFA-Video
+差不多是一个Control net，图片根据Control做变形得到视频
+
+智普清言 
+CogVideoX1.5-5B-I2V
+https://github.com/THUDM/CogVideo
+
+使用diffusers框架进行推理
+
+使用 conda管理python版本
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+chmod 777 Miniconda3-latest-Linux-x86_64.sh
+./Miniconda3-latest-Linux-x86_64.sh
+重点 Do you wish to update your shell profile to automatically initialize conda? 选yes
+source /home/user/.bashrc
+
+创建python3.12环境
+conda create --name Diffusers python=3.12
+conda activate Diffusers
+
+下载代码以及requirements.txt
+git clone https://github.com/THUDM/CogVideo.git
+安装依赖包
+pip install -r requirements.txt
+
+下载模型
+先装插件，让git支持大文件 https://github.com/git-lfs/git-lfs/blob/main/INSTALLING.md
+git clone https://huggingface.co/THUDM/CogVideoX1.5-5B-I2V
+
+云端无法翻墙的话改用https://hf-mirror.com/THUDM/CogVideoX1.5-5B-I2V下载模型
+pip install -U huggingface_hub
+export HF_ENDPOINT=https://hf-mirror.com
+huggingface-cli download --resume-download THUDM/CogVideoX1.5-5B-I2V --local-dir ./
+
+3080 不可以，爆显示存
+
+没UI自己写代码使用，参考代码
+https://huggingface.co/THUDM/CogVideoX1.5-5B-I2V/blob/main/README_zh.md
+https://github.com/THUDM/CogVideo/tree/main/inference/cli_demo.py
+
+尝试使用gradio框架
+pip install gradio
+dnf install gcc
+CogVideo/inference/gradio_composite_demo目录下面
+pip install -r requirements.txt
+python app.py
+
+使用这个版本，有对gradio的UI做出一些修改
+https://github.com/mugendainayumeatono/CogVideo
+
+不知道为什么只能720x480
+不开优化会爆显示存
+-------------------------------------------------------------------
+facefusion
+
+需要ffmpeg
+
+conda create --name facefusion python=3.12
+conda activate facefusion
+用nv的卡，所以装cuda
+conda install conda-forge::cuda-runtime=12.6.3 conda-forge::cudnn=9.3.0.75
+
+git clone https://github.com/facefusion/facefusion
+安装的时候也选cuda
+python install.py --onnxruntime cuda
+安装完必须要退出环境重新加载
+conda deactivate
+conda activate facefusion
+
+启动
+python facefusion.py run --open-browser
+
+UI用的是gradio(不需要手动装)所以可以更具需要设定环境变量
+export GRADIO_SERVER_PORT=8000
+export GRADIO_SERVER_NAME="0.0.0.0"
+
+使用的时候模型会自己从github和huggingface下
+使用deepfack的时候模型是从huggingface下的，如果需要翻墙，可以考虑事先下载好
+例如，默认的马斯克脸部模型在这里
+https://huggingface.co/facefusion/deepfacelive-models-iperov/tree/main
+
+todo训练自己的deepfack模型
+-------------------------------------------------------------------
+deepface
+https://www.deepfakevfx.com/guides/deepfacelab-2-0-guide/
+
+模型训练方法
+https://www.deepfakevfx.com/guides/deepfacelab-2-0-guide/#step-6-deepfake-model-training
+
+deepfacelive
+环境整合包，包括环境和源代码
+https://huggingface.co/datasets/dimanchkek/Deepfacelive-DFM-Models/tree/main/Pre-builds
+源代码
+https://github.com/iperov/DeepFaceLive/tree/master
+
+环境整合包里面源代码一堆bug，考虑拿git里面的代码替换进去试试看
+代码稍微改了一改，能跑了
+
+-------------------------------------------------------------------
+ai模型 wan
+见智普清言 创建python3.12环境
+conda create --name wan-video python=3.12
+conda activate wan-video
+
+git下载的东西太占位置了，改用huggingface-cli
+pip install "huggingface_hub[cli]"
+huggingface-cli download Wan-AI/Wan2.1-I2V-14B-720P --local-dir ./Wan2.1-I2V-14B-720P
+
+先手动装cuda和torch
+conda install -c conda-forge cuda=12.4
+pip install torch==2.4.0
+pip install numpy
+
+如果
+ Building wheel for flash-attn (setup.py) ...
+卡在这里，请翻墙
+
+莫名其妙，不懂为什么$CUDA_HOME这个环境变量被改成
+:/usr/local/cuda-12.4导致各种出错
+把环境变量改回/usr/local/cuda-12.4 就没事了
+
+# if one uses both 480P and 720P models in gradio
+DASH_API_KEY=your_key python i2v_14B_singleGPU.py --prompt_extend_method 'dashscope' --ckpt_dir_480p ./Wan2.1-I2V-14B-480P --ckpt_dir_720p ./Wan2.1-I2V-14B-720P
+
+可以同时或单独使用480P和720P的模型，要那个模型参数带那个模型
+gradio一定要有通义千问模型，要么本地，要么使用云服务
+--prompt_extend_method 'dashscope' 云服务，环境变量指定APIkey
+--prompt_extend_method 'local_qwen' 用本地模型
+--prompt_extend_model PROMPT_EXTEND_MODEL 指定本地模型路径
+以上都不指定，自动下载模型，并使用本地模型
+
+载入模型大概要200多秒
+
+考虑改代码，不要通义千问
+
+
+
+
+
