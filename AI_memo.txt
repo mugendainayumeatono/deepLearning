@@ -4,7 +4,7 @@ https://gpu.ai-galaxy.cn/console/dashboard
 ------------------------------------------------------
 迭代次数，迭代次数过少，可能导致画面上残留马赛克
 cfg 遵守提示词的严格层度，太严格会过拟合，太宽松生成的图形会很抽象
-denoise 不知到，最大1，太小会导致生成一张只有噪点的图
+denoise 噪声的强度，最大1，太小会导致生成一张只有噪点的图
 scheduler 不知到
 sampler 扩散方法，见下文
 
@@ -23,17 +23,18 @@ sd3特性
 sd3.5特性
 待测试
 
-安全性测试
+NSFW测试
 ------------------------------------------------------
-CounterfeitV25_25 安全
-majicmixRealistic_v7 安全
-SD3 安全
-SD3.5L不一定安全
-其余不安全
+CounterfeitV25_25 SFW
+majicmixRealistic_v7 SFW
+SD3 SFW
+SD3.5L不一定SFW
+其余NSFW
 
 
 SD3 加载测试
 ------------------------------------------------------
+RTX3080 12G显存环境
 stoiqoNewrealityFLUXSD35_sd35Prealpha 加载不了  (这个自带clip和t5xxl  以下都要单独加载clip和t5xxl) 
 stoiqoNewrealityFLUXSD35_sd35Prealpha0000 加载不了
 sd3.5_large_turbo 加载不了
@@ -171,112 +172,7 @@ Alpha 搞不太懂，大概是Alpha/rank 的比值越小lora的权重越大
 alpha减小会导致learning_rate的效果减少，如果Alpha/rank = 0.5 等于learning_rate的效果只有一半
 所以改变Alpha/rank 要考虑同步改变learning_rate
 
-songyuqi_beta_1.safetensors 适合权重0.5
-songyuqi_beta_2.safetensors 怀疑过拟合
-
-iorimoe_beta.safetensors
-训练参数
---learning_rate 1e-4
---flip_aug
---face_crop_aug_range 2,4
-fp16
-networks.lora_sd3
-  num train images * repeats / 学習画像の数×繰り返し回数: 1553
-  num reg images / 正則化画像の数: 0
-  num batches per epoch / 1epochのバッチ数: 99
-  num epochs / epoch数: 100
-  batch size per device / バッチサイズ: 16
-  gradient accumulation steps / 勾配を合計するステップ数 = 1
-  total optimization steps / 学習ステップ数: 9900
-
-iorimoe_beta2.safetensors
-训练参数
---learning_rate 1e-6**
-fp16
-networks.lora_sd3
-  num train images * repeats / 学習画像の数×繰り返し回数: 1553
-  num reg images / 正則化画像の数: 0
-  num batches per epoch / 1epochのバッチ数: 99
-  num epochs / epoch数: 100
-  batch size per device / バッチサイズ: 16
-  gradient accumulation steps / 勾配を合計するステップ数 = 1
-  total optimization steps / 学習ステップ数: 9900
-失败
-
-iorimoe_beta3.safetensors
---learning_rate 2e-6**
-fp16
-networks.lora_sd3
-权重1的时候效果还可以
-
-yuiri_beta1
-200张图
-set "cmd=!cmd! --learning_rate 2e-3"
-set "cmd=!cmd! --network_dim 64"
-set "cmd=!cmd! --network_alpha 1"
-set "cmd=!cmd! --mixed_precision fp16"
-set "cmd=!cmd! --save_precision fp16"
-set "cmd=!cmd! --full_fp16"
-set "cmd=!cmd! --flip_aug"
-3080 oom了，待测试
-根据训练时的sample 第70代好像还可以
-
-yuiri_beta2
-200张图
-set "cmd=!cmd! --learning_rate 4e-4"
-set "cmd=!cmd! --network_dim 16"
-set "cmd=!cmd! --network_alpha 1"
-set "cmd=!cmd! --mixed_precision fp16"
-set "cmd=!cmd! --save_precision fp16"
-set "cmd=!cmd! --full_fp16"
-:: -------test parameter-------
-set "cmd=!cmd! --flip_aug"
-
-yuiri_beta3
-200张图
-set "cmd=!cmd! --mixed_precision fp16"
-set "cmd=!cmd! --save_precision fp16"
-set "cmd=!cmd! --full_fp16"
-set "cmd=!cmd! --learning_rate 8e-4"
-set "cmd=!cmd! --network_dim 16"
-set "cmd=!cmd! --network_alpha 1"
-set "cmd=!cmd! --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=0.1' 'down_lr_weight=sine-.5' 'mid_lr_weight=2' 'up_lr_weight=cosine+.5'"
-
-yuiri_beta4
-200张图
-set "cmd=!cmd! --mixed_precision fp16"
-set "cmd=!cmd! --save_precision fp16"
-set "cmd=!cmd! --full_fp16"
-set "cmd=!cmd! --learning_rate 8e-4"
-set "cmd=!cmd! --network_dim 16"
-set "cmd=!cmd! --network_alpha 1"
-set "cmd=!cmd! --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=0.1' 'down_lr_weight=sine-.5' 'mid_lr_weight=2' 'up_lr_weight=cosine+1'"
-挺成功的
-
-yuiri_beta5
-200张图
-set "cmd=!cmd! --mixed_precision fp16"
-set "cmd=!cmd! --save_precision fp16"
-set "cmd=!cmd! --full_fp16"
-set "cmd=!cmd! --learning_rate 1.6e-3"
-set "cmd=!cmd! --network_dim 32"
-set "cmd=!cmd! --network_alpha 1"
-set "cmd=!cmd! --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=0.1' 'down_lr_weight=sine-.5' 'mid_lr_weight=2' 'up_lr_weight=cosine+1'"
-
-flux 训练200张图
-载入模型的时候内存峰值用到60G左右
-batch16 爆显存
-batch8 显存用量约32G
-必须使用 --mixed_precision bf16 --save_precision bf16 否则会avr_loss=nan
-
-yuiri_flux_beta1
-cmd="$cmd --mixed_precision bf16"
-cmd="$cmd --save_precision bf16"
-cmd="$cmd --full_bf16"  # Uncomment to enable full_fp16
-cmd="$cmd --learning_rate 1e-5"
-cmd="$cmd --network_dim 16"
-cmd="$cmd --network_alpha 1"
-cmd="$cmd --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=0.1' 'down_lr_weight=sine-.5' 'mid_lr_weight=2' 'up_lr_weight=cosine+1'"
+具体训练记录见traininglog.txt
 
 ========================================================
 生成视频
@@ -374,6 +270,7 @@ https://www.deepfakevfx.com/guides/deepfacelab-2-0-guide/
 
 模型训练方法
 https://www.deepfakevfx.com/guides/deepfacelab-2-0-guide/#step-6-deepfake-model-training
+见deepface_note.txt
 
 deepfacelive
 环境整合包，包括环境和源代码
