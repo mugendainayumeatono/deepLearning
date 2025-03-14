@@ -1,17 +1,37 @@
 https://github.com/sgl-project/sglang/tree/main/benchmark/deepseek_v3
+
+安装容器工具
+
+红帽系
+使用容器需要安装nvidia的驱动
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
+  sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+sudo yum install -y nvidia-container-toolkit
+
+乌班图
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+  && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+sudo apt-get update
+sudo apt-get install -y nvidia-container-toolkit
+
+测试驱动是否安装成功
+sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+>能显示驱动版本
+
+nvidia-ctk cdi list
+>能列出GPU列表
+
+podman run --rm --device nvidia.com/gpu=all --security-opt=label=disable lmsysorg/sglang:latest nvidia-smi
+>能列出GPU使用情况
+docker run --rm --gpus all nvidia/cuda:11.0.3-base-ubuntu20.04 nvidia-smi
+>乌班图使用
+
+启动：
+
 docker run --gpus all --shm-size 32g -p 30000:30000 -v ~/.cache/huggingface:/root/.cache/huggingface --ipc=host lmsysorg/sglang:latest \
     python3 -m sglang.launch_server --model deepseek-ai/DeepSeek-V3 --tp 8 --trust-remote-code --port 30000
-
-docker run --rm --gpus all -p 5000:30000 -v /home/mickey/LLM/deepseek/.cache/huggingface:/root/.cache/huggingface --ipc=host lmsysorg/sglang:latest python3 -m sglang.launch_server --model-path /root/.cache/huggingface/DeepSeek-R1-Distill-Qwen-1.5B --tp 1 --trust-remote-code --port 30000
-
-docker run --rm --gpus all -p 5000:30000 -v /home/mickey/LLM/deepseek/.cache/huggingface:/root/.cache/huggingface --ipc=host lmsysorg/sglang:latest python3 -m sglang.launch_server --model-path /root/.cache/huggingface/DeepSeek-R1-Distill-Llama-8B --tp 1 --trust-remote-code --port 30000
-
-wsl2环境
-docker使用端口映射网络，windows或者其他远程主机都无法访问到映射出来的端口，只有在wsl2内可以访问映射出来的端口
-所以需要多加一层端口转发ncat --sh-exec "ncat 127.0.0.1 5000" -l 5001  --keep-open
-???	待调查，必须用普通用户执行，用roor用户执行会导致wsl2 无法访问到5000端口
-修改tcpkeepalive，auth
---quantization fp8  --mem-fraction-static
 
 报ipc host模式不能修改 shm-size 删除--shm-size 32g后容器成功启动
 
@@ -25,18 +45,18 @@ git clone下载huggingfaces上面的模型到本地
 需要把容器外的模型路径映射到容器内部
 --tp 1 指定GPU核心数，如果指定的比实际有的核心数多，会报错找不到核心
 
-使用容器需要安装nvidia的驱动
-curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
-  sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
-sudo yum install -y nvidia-container-toolkit
+以下能正常启动
+docker run --rm --gpus all -p 5000:30000 -v /home/mickey/LLM/deepseek/.cache/huggingface:/root/.cache/huggingface --ipc=host lmsysorg/sglang:latest python3 -m sglang.launch_server --model-path /root/.cache/huggingface/DeepSeek-R1-Distill-Qwen-1.5B --tp 1 --trust-remote-code --port 30000
+docker run --rm --gpus all -p 5000:30000 -v /home/mickey/LLM/deepseek/.cache/huggingface:/root/.cache/huggingface --ipc=host lmsysorg/sglang:latest python3 -m sglang.launch_server --model-path /root/.cache/huggingface/DeepSeek-R1-Distill-Llama-8B --tp 1 --trust-remote-code --port 30000
+docker run --rm --gpus all -p 5000:30000 -v /home/hdd1/LLM/deepSeek/deepSeekCache:/root/.cache/huggingface --ipc=host lmsysorg/sglang:latest python3 -m sglang.launch_server --model-path /root/.cache/huggingface/DeepSeek-R1-Distill-Qwen-14B --tp 1 --trust-remote-code --port 30000
 
-测试驱动是否安装成功
-sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
-能显示驱动版本
-nvidia-ctk cdi list
-能列出GPU列表
-podman run --rm --device nvidia.com/gpu=all --security-opt=label=disable ubuntu nvidia-smi -L
-能列出GPU使用情况
+
+wsl2环境
+docker使用端口映射网络，windows或者其他远程主机都无法访问到映射出来的端口，只有在wsl2内可以访问映射出来的端口
+所以需要多加一层端口转发ncat --sh-exec "ncat 127.0.0.1 5000" -l 5001  --keep-open
+???	待调查，必须用普通用户执行，用roor用户执行会导致wsl2 无法访问到5000端口
+修改tcpkeepalive，auth
+--quantization fp8  --mem-fraction-static
 
 不使用容器，必须使用python3.10
 # Installation
@@ -49,6 +69,8 @@ python3 -m sglang.launch_server --model deepseek-ai/DeepSeek-V3 --tp 8 --trust-r
 _sqllite3.so这个库，需要通过yum 安装sqllite3-devel包，但是安装的版本会是linux发行版默认python版本对应的so文件，至少python3.9和python3.10的so文件不兼容，直接用3.9的so文件会段错误
 应该是需要从源代码从新编译python310,configure的时候加编译选项，把310版的so文件编译出来
 
+
+
 https://github.com/open-webui/open-webui
 sudo docker run -d --net=bridge -e OPENAI_API_KEY="EMPTY" -v /home/mickey/LLM/open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main
 
@@ -56,6 +78,7 @@ docker run -d -p 8081:8080 -e GLOBAL_LOG_LEVEL="DEBUG" -v /home/mickey/LLM/open-
 
 容器能正常启动，端口映射应改为-p 8080 8080，8080端口上可以得到一个web页面
 api接口的URL在web画面内设置
+
 
 
 DeepSeek-R1-Distill-Qwen-14B 跑不动
