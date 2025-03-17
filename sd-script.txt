@@ -1,0 +1,246 @@
+#训练
+------------------------------------------------------
+#sd-scripts
+使用fine tuning 方式训练
+
+##1.准备训练数据
+
+###1.1爬取数据
+
+1.1.1从抖音爬
+
+需要使用电脑开抖音
+https://www.douyin.com/
+在视频上面右击，弹出来的框里面选分享
+得到一个类似这样的链接
+0.76 06/25 qRx:/ H@V.yt 仅凭一盒牛奶，男人便成功越狱# 电影 # 好看电影推荐 # 我的观影报告 # 影视解说 # 内容启发搜索  https://v.douyin.com/i5WkcBnA/ 复制此链接，打开Dou音搜索，直接观看视频！
+
+下载网站
+https://dlpanda.com/zh-CN
+把链接内容原原本本贴到下载网站上就可以把视频下下来
+
+1.1.2从instagram爬(这个要翻墙)
+https://www.instagram.com/
+个人主页的那个地址丢到下载网站去就可以下载
+下载网站
+https://sssinstagram.com/zh
+
+1.1.3其他
+微博，小红书等其他平台怎么爬就，等各位大佬开发爬虫
+
+###1.2洗数据
+工具见image_perprocess
+爬下来的可以是图片也可以是视频
+文件放到input文件夹，执行脚本，结果会保存在output文件夹
+
+1.2.0 安装依赖库
+pip install -r requirements.txt
+自己解决替换国内源或者科学上网问题
+
+1.2.1   1_rename.py 可选
+用于把所有爬下来的文件统一命名，否则有些文件名会太长，影响确认文件名
+不改名也是可以的~
+
+1.2.2   2_conver_format.py
+格式转换
+图片全转成jpg格式
+视频每30帧抽一帧输出成图片
+根据需要转换的文件格式解除代码里面的注释
+    #convert_jfif_to_jpeg(input_folder, output_folder, ".avif")
+    #convert_jfif_to_jpeg(input_folder, output_folder, ".image")
+    #convert_jfif_to_jpeg(input_folder, output_folder, ".jfif")
+    #convert_jfif_to_jpeg(input_folder, output_folder, ".jpg")
+    #convert_jfif_to_jpeg(input_folder, output_folder, ".png")
+    #convert_jfif_to_jpeg(input_folder, output_folder, ".webp")
+    #convert_jfif_to_jpeg(input_folder, output_folder, ".heic")
+
+    extract_frames_from_videos(input_folder, output_folder, frame_interval)
+
+1.2.3  5_crop.py 可选
+把1.2.2的到的所有图片剪裁成相同的尺寸
+这步也不是必须的，只要1.2.2的到的图片不是尺寸全都不一样就可以不用这一步
+例如100张图，有25张512x512的 25张720x480的，25张1080x720的 25张480x360的
+那么可以不用这一步
+如果100张图，每张图尺寸都不一样，那么使用这个脚本剪裁成相同的尺寸
+***注意这个脚本是剪裁，不是拉伸，得到的结果图片不会因为长宽比变了而变形，但是多余的部分会被裁掉
+所以剪裁完，注意检查，你需要的训练的对象有没有被裁掉
+
+##2.准备dataset.toml文件
+文件模板见GPU服务器上
+/home/hdd1/sd-scripts/resource/resource4_training_small_200/dataset.toml
+
+'''
+[general]
+#这个设成true，开启分桶训练模式，训练用图片可以不用大小尺寸全部一样，如果是false，就要全部训练文件都一样的尺寸
+enable_bucket = true
+
+[[datasets]]
+#enable_bucket = true的话，这个值随便设。enable_bucket = false的话，这个值设成训练图片实际的长宽，如果实际长宽和resolution不一致会报错
+resolution = 512
+ #批次大小，影响训练效率，batch_size 越大训练越快，但是消耗越多显示，40G显存推荐值 8
+batch_size = 16
+
+  [[datasets.subsets]]
+  #指定训练用图片的存放的文件夹
+  image_dir = 'D:\AiDraw\lora-training\resource4_training_small_200'
+  #指定一个词，随机什么词都可以，最好是少见的词，之后推理生成图片的时候，需要在提示词里面带上这个词
+  class_tokens = 'yuiri'
+  #这个设1就好，加大也只是拖长训练时长，对训练结果无明显提升
+  num_repeats = 1
+'''
+[[datasets.subsets]] 节的内容可以重复多个，每个的image_dir指定到不同路径，实现训练数据可以放到多个不同的文件夹
+
+其余参数见
+https://github.com/kohya-ss/sd-scripts/blob/sd3/docs/config_README-ja.md
+
+##3.训练脚本
+见/home/hdd1/sd-scripts/sd-scripts/_run_fluxd.sh
+只说明需要改的参数，其余参数见
+https://github.com/kohya-ss/sd-scripts/blob/sd3/docs/config_README-ja.md
+
+'''
+# ------- Path settings -------
+#指定2.准备dataset.toml文件步骤准备好的dataset.toml文件路径
+cmd="$cmd --dataset_config /home/hdd1/sd-scripts/resource/resource4_training_small_200/dataset_flux.toml"
+#指定训练出来lora模型的保存路径
+cmd="$cmd --output_dir /home/hdd1/sd-scripts/lora"
+#指定训练出来lora模型的文件名
+cmd="$cmd --output_name yuiri_flux_beta3"
+
+# ------- Training settings -------
+#训练代数，见下面关于学习率的说明
+cmd="$cmd --max_train_epochs 100"
+
+# ------- Other parameter settings -------
+#设置学习率，见下面关于学习率的说明
+cmd="$cmd --learning_rate 1.6e-3"
+#设置权重，见下面关于学习率的说明
+cmd="$cmd --network_dim 16"
+cmd="$cmd --network_alpha 1"
+#设置分块学习，见下面关于学习率的说明
+cmd="$cmd --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=0.1' 'down_lr_weight=sine-.5' 'mid_lr_weight=2' 'up_lr_weight=cosine+1'"
+'''
+
+##4.开始训练
+4.1先切换到训练用的python环境
+`conda activate sd-scripts`
+
+4.2然后直接启动训练脚本就可以
+`./_run_fluxd.sh`
+之后关闭终端也每关系，训练会在后台继续跑
+
+4.3观察
+训练日志会输出到
+`tail -f log.log`
+
+观察训练日志
+如果一切正常，经过一段时间的初始化，就可以看见进度条在跑
+中间会跑好多个进度条，最后一个进度条长得类似下面这样
+steps: 100%|██████████| 2500/2500 [5:43:26<00:00,  8.24s/it, avr_loss=0.38]
+这样训练就开始了，跑到100%训练结束
+
+观察最后avr_loss=0.38这个数据，这个数据如果随着时间慢慢变小，说明训练有效果，变的越小，训练约有效果
+如果出现avr_loss=NA 那么就是训练失败了，可以直接停止训练，然后考虑换一批训练用图片试试
+
+##5.训练结果
+到训练脚本里面cmd="$cmd --output_dir 指定的目录去找
+只要保留名字类似yuiri_flux_beta3.safetensors的文件就可以
+文件名带数字的文件和文件夹都是中间文件，训练完可以删掉
+
+##6.使用lora
+训练结果.safetensors文件拷贝到/home/hdd1/comfyUI/ComfyUI/models/loras下面
+然后用confyUI刷新页面，加载Lora节点就能选择到刚刚训练出来的lora
+尝试画几张图就知道训练结果记得提示词要带上
+##2.准备dataset.toml文件 时设置的  class_tokens = 
+
+##7.关于学习率
+参考
+https://rentry.org/59xed3#the-unet-and-its-blocks (要翻墙)
+https://github.com/kohya-ss/sd-scripts/blob/sd3/docs/train_network_README-zh.md
+
+学习率
+
+--learning_rate 一般设置为1e-4至1e-3
+学习率越大，学习速度越快，avr_loss(见4.3观察)变小的越快，但是使用lora的时候画面崩坏的可能也越大
+学习率太小，可能导致最终lora没什么效果
+
+网络维度
+lora的神经网络包含Rank和Alpha2个参数
+set "cmd=!cmd! --network_dim 64" 
+set "cmd=!cmd! --network_alpha 1"
+学习内容越复杂 Rank的值要越高，最高设到128就差不多了
+简单的训练一个角色，据说16就够了
+rank越大训练时间越长，生成的lora体积越大
+Alpha 搞不太懂，大概是Alpha/rank 的比值越小lora的权重越大，使用lora的时候效果越显著
+alpha减小会导致learning_rate的效果减少，如果Alpha/rank = 0.5 等于learning_rate的效果只有一半
+也就是
+Alpha/rank = 0.5
+learning_rate = 2e-4
+和
+Alpha/rank = 1
+learning_rate = 1e-4
+learning_rate产生的效果是一样的
+所以减小Alpha/rank 要考虑同步增大learning_rate
+
+分层学习
+cmd="$cmd --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=0.1' 'down_lr_weight=sine-.5' 'mid_lr_weight=2' 'up_lr_weight=cosine+1'"
+网络是分层的，不同层对应着不同的学习内容
+![参考这个图](https://img.uied.cn/wp-content/uploads/2024/01/lFmOTZ-20240101.png?imageMogr2/thumbnail/1845x684)
+针对不同的需要学习的内容，可以分别单独给网络设定权重
+类似Alpha/rank的比值是整个lora的权重，lora神经网络的每层都可以单独设定权重
+用于重点学习某一层的特征
+
+'down_lr_weight=sine-.5' 输入分区
+'mid_lr_weight=2'        中间分区
+'up_lr_weight=cosine+1'  输出分区
+
+你可以像这样给每一层指定一个权重
+--network_args "down_lr_weight=0.5,0.5,0.5,0.5,1.0,1.0,1.0,1.0,1.5,1.5,1.5,1.5" "mid_lr_weight=2.0" "up_lr_weight=1.5,1.5,1.5,1.5,1.0,1.0,1.0,1.0,0.5,0.5,0.5,0.5"
+
+也可以像这样，从预设中指定：
+例如"down_lr_weight=sine"（使用正弦曲线指定权重）。可以指定sine、cosine、linear、reverse_linear、zeros。
+另外，添加 +数字 时，可以将指定的数字加上（变为0.25〜1.25）。
+--network_args "block_lr_zero_threshold=0.1" "down_lr_weight=sine+.5" "mid_lr_weight=1.5" "up_lr_weight=cosine+.5"
+
+
+工具开发者给出的默认值
+--learning_rate=1e-4
+--network_dim 4 
+--network_alpha 1
+
+我现在的脚本
+--learning_rate 1.6e-3
+--network_dim 64
+--network_alpha 1
+我的脚本
+Alpha/rank缩小了16倍
+学习率1.6e-3除以16=1e-4
+
+也就是整体learning_rate的作用效果没有变化，但是lora权重增加了
+
+以上这些就是调参仔的工作了，用同一批图片不断调整学习率，和权重，看最后能不能得到一个比较好的模型
+
+##8.传说
+
+据传，简单的训练一个角色，--network_dim 16就够了
+
+据传，训练一个角色需要100~200张图
+
+log里面，会有一段这个
+running training / 学習開始
+  num train images * repeats / 学習画像の数×繰り返し回数: 199
+  num validation images * repeats / 学習画像の数×繰り返し回数: 0
+  num reg images / 正則化画像の数: 0
+  num batches per epoch / 1epochのバッチ数: 25
+  num epochs / epoch数: 100
+  batch size per device / バッチサイズ: 8
+  gradient accumulation steps / 勾配を合計するステップ数 = 1
+  total optimization steps / 学習ステップ数: 2500
+
+训练是按batche训练的（见##2.准备dataset.toml文件 batch_size = 16）
+每训练一个batch就是训练一个step
+每一代(epoch)都会训练全部batch
+所以，例如200张图，每8个图一个batch，就是25个batch，所以每代训练，都会训练25个step
+训练100代就是训练2500个step
+据传，total optimization steps 1000步左右就能取得比较明显的效果
+也就是100张图batch size设8，100代据说就是取得不错的结果
