@@ -1,0 +1,32 @@
+用docker就可以了
+
+一键脚本
+curl -L -o docker-setup.sh https://raw.githubusercontent.com/xinnan-tech/xiaozhi-esp32-server/main/docker-setup.sh
+
+主要动作是
+1.下载语言识别模型 SenseVoiceSmall
+2.下载docker-compose.yml
+3.下载配置文件模板.config.yaml
+没了
+
+确认.config.yaml在xiaozhi-server的data目录下面
+然后编辑.config.yaml
+主要设定点
+server:
+  port: 8800
+  log_level: DEBUG
+selected_module:
+  LLM: DeepSeekLLM
+LLM:
+  DeepSeekLLM:
+    model_name: default
+    url: http://127.0.0.1:30000/v1
+    api_key: EMPTY
+
+然后开始启动
+不要被docker-compose.yml忽悠了，不要数据库也可以
+docker-compose.yml同一目录下执行
+docker-compose up -d
+
+然后观察日志
+docker logs -f xiaozhi-esp32-server
