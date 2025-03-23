@@ -1,0 +1,82 @@
+360 Degree Rotation
+https://civitai.com/models/1346623/360-degree-rotation-microwave-rotation-wan21-i2v-lora?modelVersionId=1520902
+The trigger word is: 'r0t4tion 360 degrees rotation'
+
+Bouncy Walk 往前走
+https://civitai.com/models/1361346/bouncy-walk-wan-i2v-14b
+例子
+A brunette girl, is sitting on the bed of her bedroom and standing up, she wears white bikini, her breasts are bouncing, her face is cut off, she is walking into the direction of the moving camera, noisy image quality
+应该是带walking into the direction of the moving camera
+
+P003-Sexy-Dance-i2v-v10-000010_converted.safetensors
+https://civitai.com/models/1376409/sexy-enhancer-wan-i2v-14b?modelVersionId=1555249
+for example:
+stroking the neck with both hands
+grabbing the breasts
+stroking the buttocks
+touching the breasts from head to toe with both hands
+touching the breasts from hips up and grabbing them
+breasts bouncing
+
+bounceV_01.safetensors 乳摇
+https://civitai.com/models/1343431/bouncing-boobs-wan-i2v-14b?modelVersionId=1517164
+A girl with blonde extensions is standing in a hotel room, she wears black lingerie, her breasts are bouncing shaking or wobbeling up and down, her hands stand still, her face is cut off
+
+cute4doll
+https://civitai.com/models/1359354/cute4doll?modelVersionId=1535597
+prompt example：cute4doll, one pretty lady in white dress, creating a cute4doll effect
+好像只能T2V
+
+danceMax4-000009.safetensors  Chest-Bouncing Dance 乳摇
+https://civitai.com/models/1379311/chest-bouncing-dance-or-wanvideo14b-itv?modelVersionId=1558460
+没写提示词
+可以试试这个bouncing chest movements, 
+
+大摆锤 dbc
+https://civitai.com/models/1365589/phut-hon-dance?modelVersionId=1542806
+example prompt： dabaichui，someone holds someone's head with both hands and twists someone's waist and hips left and right ，making dabaichui motion
+
+摘下你的头 duantou 
+https://civitai.com/models/1361686/take-off-your-head?modelVersionId=1538306
+
+Flying Effect (Wan2.1 I2V LoRA)
+https://civitai.com/models/1348626/flying-effect-wan21-i2v-lora?modelVersionId=1523247
+The trigger word is: 'sb9527sb flying effect'
+Example 1: In the video, a woman takes off from the ground and flies out of the window. She flies out of the window, creating a graceful ascending motion, causing a sb9527sb flying effect. The woman continues to glide forward through dense woods, further showing the sb9527sb flying effect.
+
+let's dancing_wan_i2v.safetensors
+https://civitai.com/models/1362624/lets-dancewan21-i2v-lora?modelVersionId=1539428
+The trigger word is dancing, and the recommended weight is 0.8-1. It can be combined with other action loras.
+
+螺旋飞 luoxuanfei30
+https://civitai.com/models/1363191/wanx-motion-loraascend-in-a-spiral-motion?modelVersionId=1540045
+The {subject} in the image transforms into a balloon, then spins and flies away.
+
+remade_westworld_35.safetensors 裂开
+https://civitai.com/models/1369426/westworld-robot-face-reveal-wan21-i2v-lora?modelVersionId=1547171
+The trigger word is: 'r8b8t1c robotic face reveal'
+
+slzw.safetensors 吃鸡胜利之舞
+https://civitai.com/models/1377066/pubg-victory-dance-146146?modelVersionId=1555922
+example prompt：shenglizhiwu, someone dancing and making shenglizhiwu motion
+
+standing_v1.safetensors 一字马
+https://civitai.com/models/1362738/wan-i2v?modelVersionId=1539549
+只需在您的提示词中添加以下触发词: v3rt1cal_split standing pose with one leg raised completely vertical 和 v3rt1cal_split effect
+完整提示词示例: "In the video, a person standing on the ground. Then the person demonstrates impressive flexibility by performing a v3rt1cal_split standing pose with one leg raised completely vertical, maintaining perfect balance while holding the extended leg, creating a dramatic line with their body as seen in fashion photography. The v3rt1cal_split effect shows their exceptional flexibility with one foot remaining on the ground."
+
+Tai Chi Kung Fu
+https://civitai.com/models/1370141/tai-chi-kung-fu-or-wanvideo14b-itv?modelVersionId=1547973
+
+Everyone Flying(Wan2.1 T2V LoRA)
+https://civitai.com/models/1366576/everyone-flyingwan21-t2v-lora?modelVersionId=1543874
+In the video,{A women|Trump|man}  takes off from the {street | ground} into the air. {She  stretches her arms} and leaps into the air, creating a graceful ascending motion, causing a sb9527sb flying effect. {The women| man} continues to glide forward through {city buildings|dense woods}, further showing the sb9527sb flying effect.
+
+wan_disintegrate_e141.safetensors 变成一堆碎片
+https://civitai.com/models/1360349/particalize-i2v-lora?modelVersionId=1538431
+建议强度0.4-1.0！！！想要效果好，不要开Teacache,否则生成质量会很差！然后最好开kj的slg
+提示词：什么 is disintegrating or turning into 什么 （“什么”要根据你的需求替换）
+如果你想做颗粒化那就用权重1.0，如果你想更加有创意那么就用权重0.4-0.5（看我的post那个变成小面包的dio）
+
+
+

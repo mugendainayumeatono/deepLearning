@@ -131,3 +131,9 @@ cmd="$cmd --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=
 cmd="$cmd --flip_aug"
 基本成功了，但是好像衣服也训练进去了
 
+山塘街
+cmd="$cmd --learning_rate 1.6e-3"
+cmd="$cmd --network_dim 64"
+cmd="$cmd --network_alpha 1"
+cmd="$cmd --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=0.1' 'down_lr_weight=sine-.5' 'mid_lr_weight=2' 'up_lr_weight=cosine+1'"
+dim 提高了，不知道学习率会不会不足
