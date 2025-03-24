@@ -131,6 +131,23 @@ cmd="$cmd --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=
 cmd="$cmd --flip_aug"
 基本成功了，但是好像衣服也训练进去了
 
+yuiri_flux_beta4
+cmd="$cmd --mixed_precision bf16"
+cmd="$cmd --save_precision bf16"
+cmd="$cmd --full_bf16" 
+cmd="$cmd --learning_rate 1.6e-3"
+cmd="$cmd --network_dim 16"
+cmd="$cmd --network_alpha 1"
+cmd="$cmd --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=0.1' 'down_lr_weight=0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1' 'mid_lr_weight=1.5' 'up_lr_weight=1.5,1.5,2.0,2.0,1.0,1.0,1.0,1.0,0.5,0.5,0.5,0.5'"
+cmd="$cmd --flip_aug"
+失败脸部学习效果明显比beta3弱
+
+yuiri_flux_beta5
+参数同yuiri_flux_beta3
+训练数据改为250张只有脸的图，试图只训练脸，排除衣服对推理结果的影响
+
+
+
 山塘街
 cmd="$cmd --learning_rate 1.6e-3"
 cmd="$cmd --network_dim 64"
