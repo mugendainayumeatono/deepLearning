@@ -1,0 +1,121 @@
+##训练框架有2个
+https://github.com/tdrussell/diffusion-pipe
+https://github.com/kohya-ss/musubi-tuner
+
+##diffusion-pipe
+
+###安装
+git clone --recurse-submodules https://github.com/tdrussell/diffusion-pipe
+conda create -n diffusion-pipe python=3.12
+pip install torch torchvision
+pip install -r requirements.txt
+
+export CUDA_HOME=/usr/local/cuda
+
+----
+问题
+pip install -r requirements.txt 的时候出现
+FileNotFoundError: [Errno 2] No such file or directory: ':/usr/local/cuda/bin/nvcc'
+解决
+export CUDA_HOME=/usr/local/cuda
+
+###下模型
+huggingface-cli download Wan-AI/Wan2.1-T2V-1.3B --local-dir Wan2.1-T2V-1.3B --exclude "diffusion_pytorch_model*" "models_t5*"
+
+###训练数据准备
+
+81帧 8x10+1 oom
+72帧 8x9+0   oom
+65帧 8x8+1   oom
+57帧 8x7+1  diffusion-pipe 认为只有30帧？ 修改为 9之后可以训练，但是loss nan
+
+bf16改成fp16，没用
+只用1个视频 fp16，没用
+
+更换为confyUI官方的模型 bf16 
+loss nan
+
+###配置
+和sd-script一样，要准备一个dataset.tom
+参考https://github.com/tdrussell/diffusion-pipe/blob/main/examples/dataset.toml
+
+I2V训练必须使用视频，否则报错
+训练数据支持绝大多数视频和图片格式，不同格式可以混在一起，不用区分格式
+每个文件训练文件都要对应有一个Caption文件
+暂时没看见自动标注视频的方法，考虑手动标注，全部的视频都标注成同样的一段话或者一个词应该可以
+
+自动分桶
+frame_buckets = [1, 33]
+上面这行配置指定每个桶的帧数量
+第一个桶帧数量必须是1，根据显存大小调整每个桶的帧数量
+
+----
+然后再准备一个配置文件，参考
+https://github.com/tdrussell/diffusion-pipe/blob/main/examples/hunyuan_video.toml
+但是做下面这些修改
+[model]
+type = 'wan'
+ckpt_path = '/data2/imagegen_models/Wan2.1-T2V-1.3B'
+transformer_path = '/data2/imagegen_models/wan_comfyui/wan2.1_t2v_1.3B_bf16.safetensors'
+llm_path = '/data2/imagegen_models/wan_comfyui/wrapper/umt5-xxl-enc-bf16.safetensors'
+dtype = 'bfloat16'
+# You can use fp8 for the transformer when training LoRA.
+#transformer_dtype = 'float8'
+timestep_sample_method = 'logit_normal'
+
+wan模型本身和llm模型可以指定为comfyui的格式如下
+transformer_path = '/data2/imagegen_models/wan_comfyui/wan2.1_t2v_1.3B_bf16.safetensors'
+llm_path = '/data2/imagegen_models/wan_comfyui/wrapper/umt5-xxl-enc-bf16.safetensors'
+
+但是wan官方的其他文件还是要下载并且设置到ckpt_path = '/data2/imagegen_models/Wan2.1-T2V-1.3B'
+huggingface-cli download Wan-AI/Wan2.1-T2V-1.3B --local-dir Wan2.1-T2V-1.3B --exclude "diffusion_pytorch_model*" "models_t5*"
+
+----
+显存优化
+在配置里面加这个
+[optimizer]
+type = 'AdamW8bitKahan'
+lr = 5e-5
+betas = [0.9, 0.99]
+weight_decay = 0.01
+stabilize = false
+
+###开始训练
+注意区分dataset.tom和hunyuan_video.toml
+dataset.tom是数据集配置，hunyuan_video.toml是训练参数配置
+只要把hunyuan_video.toml作为参数传递给train.py
+
+NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" deepspeed --num_gpus=1 train.py --deepspeed --config examples/hunyuan_video.toml
+前面的4000系显卡需要带上2个环境变量
+如果不是4000系显卡，不需要这2个环境变量
+参数带上 --resume_from_checkpoint "20250212_07-06-40" 可以从断点继续训练
+
+正式训练前会先自动做缓存，这点musubi-tuner也一样，需要缓存，但是目前musubi-tuner缓存要手动执行
+也可以单独只生成缓存，但不训练 --cache_only
+每个数据集缓存只生成一次，之后自动使用上次生成的缓存，所以如果数据集有发生变动，要更新缓存
+--regenerate_cache
+或者把cache文件夹整个删了也行
+
+Todo
+确认使用普通的fp16版模型和fp8版模型，各自最大能训练多少帧
+降低帧率的代码
+
+##musubi-tuner
+2025/3/26为止还在开发中
+
+###安装
+问题
+ModuleNotFoundError: No module named 'triton.ops.matmul_perf_model'
+解决
+triton版本降到3.1.0
+pip install --force-reinstall -v "triton==3.1.0"
+
+###dataset
+基本和sd-script接近，参考
+https://github.com/kohya-ss/musubi-tuner/blob/main/dataset/dataset_config.md
+
+###训练
+如果训练的时候保存，考虑下面这个是不是加了
+If you train I2V models, add --clip path/to/models_clip_open-clip-xlm-roberta-large-vit-huge-14.pth
+clip要用wan2.1官方的，comfyui-org和kijia的都不可以
+

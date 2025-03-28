@@ -145,8 +145,12 @@ cmd="$cmd --flip_aug"
 yuiri_flux_beta5
 参数同yuiri_flux_beta3
 训练数据改为250张只有脸的图，试图只训练脸，排除衣服对推理结果的影响
+似乎消除了衣服的影响，但是因为训练数据只有脸，所以偶尔会出现推理出来的图片只有脸的情况
 
-
+cmd="$cmd --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=0.1' 'down_lr_weight=0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1' 'mid_lr_weight=1.5' 'up_lr_weight=1.5,1.5,2.0,2.0,1.0,1.0,1.0,1.0,0.5,0.5,0.5,0.5'"
+'down_lr_weight=sine-.5' 
+改成linner
+'down_lr_weight=linner' 
 
 山塘街
 cmd="$cmd --learning_rate 1.6e-3"
