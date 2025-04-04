@@ -55,10 +55,10 @@ def extract_frames_from_videos(input_folder, output_folder, frame_interval=1):
             video_capture.release()
             print(f"完成视频 {filename}: 共保存 {saved_count} 张图片到 {video_output_folder}")
 
-def convert_jfif_to_jpeg(input_folder, output_folder, extension):
+def convert_jfif_to_jpeg(input_folder, output_folder, intput_extension, output_extension):
     # 遍历输入文件夹中的所有文件
     for filename in os.listdir(input_folder):
-        if filename.lower().endswith(extension):  # 检查文件扩展名是否为 .jfif
+        if filename.lower().endswith(intput_extension):  # 检查文件扩展名是否为 .jfif
             # 构建输入文件的完整路径
             input_path = os.path.join(input_folder, filename)
             
@@ -66,11 +66,14 @@ def convert_jfif_to_jpeg(input_folder, output_folder, extension):
             print(input_path)
             with Image.open(input_path) as img:
                 # 构建输出文件的完整路径，替换扩展名为 .jpeg
-                output_filename = os.path.splitext(filename)[0] + ".jpeg"
+                output_filename = os.path.splitext(filename)[0] + output_extension
                 output_path = os.path.join(output_folder, output_filename)
                 
                 # 将图像保存为 .jpeg 格式
-                img.convert("RGB").save(output_path, "JPEG")
+                if(output_extension == ".jpeg"):
+                    img.convert("RGB").save(output_path, "JPEG")
+                elif(output_extension == ".png"):
+                    img.convert("RGB").save(output_path, "PNG")
                 print(f"Converted: {input_path} -> {output_path}")
 
 if __name__ == "__main__":
@@ -78,12 +81,14 @@ if __name__ == "__main__":
     output_folder = "output"  # 替换为保存图片的文件夹路径
     frame_interval = 10  # 每隔 30 帧提取一张图片
 
-    #convert_jfif_to_jpeg(input_folder, output_folder, ".avif")
-    #convert_jfif_to_jpeg(input_folder, output_folder, ".image")
-    #convert_jfif_to_jpeg(input_folder, output_folder, ".jfif")
-    #convert_jfif_to_jpeg(input_folder, output_folder, ".jpg")
-    #convert_jfif_to_jpeg(input_folder, output_folder, ".png")
-    #convert_jfif_to_jpeg(input_folder, output_folder, ".webp")
-    #convert_jfif_to_jpeg(input_folder, output_folder, ".heic")
+    #convert_jfif_to_jpeg(input_folder, output_folder, ".avif", ".jpeg")
+    #convert_jfif_to_jpeg(input_folder, output_folder, ".image", ".jpeg")
+    #convert_jfif_to_jpeg(input_folder, output_folder, ".jfif", ".jpeg")
+    #convert_jfif_to_jpeg(input_folder, output_folder, ".jpg", ".jpeg")
+    #convert_jfif_to_jpeg(input_folder, output_folder, ".png", ".jpeg")
+    #convert_jfif_to_jpeg(input_folder, output_folder, ".webp", ".jpeg")
+    #convert_jfif_to_jpeg(input_folder, output_folder, ".heic", ".jpeg")
 
-    extract_frames_from_videos(input_folder, output_folder, frame_interval)
+    convert_jfif_to_jpeg(input_folder, output_folder, ".jpg", ".png")
+
+    #extract_frames_from_videos(input_folder, output_folder, frame_interval)
