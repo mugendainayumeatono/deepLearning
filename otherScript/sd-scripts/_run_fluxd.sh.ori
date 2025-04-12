@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# Initialize the command
+cmd="accelerate launch"
+
+# Set common parameters
+cmd="$cmd --num_cpu_threads_per_process 1"
+cmd="$cmd flux_train_network.py"
+
+# ------- Path settings -------
+cmd="$cmd --pretrained_model_name_or_path /home/hdd1/comfyUI/ComfyUI/models/checkpoints/flux_dev.safetensors"
+cmd="$cmd --clip_l /home/hdd1/comfyUI/ComfyUI/models/clip/CLIP_sd3/clip_l.safetensors"
+cmd="$cmd --t5xxl /home/hdd1/comfyUI/ComfyUI/models/clip/CLIP_sd3/t5xxl_fp8_e4m3fn.safetensors"
+cmd="$cmd --ae /home/hdd1/comfyUI/ComfyUI/models/vae/ae.safetensors"
+cmd="$cmd --dataset_config /home/hdd1/sd-scripts/resource/resource4_training_small_200/dataset_flux.toml"
+cmd="$cmd --output_dir /home/hdd1/sd-scripts/lora"
+cmd="$cmd --output_name yuiri_flux_beta3"
+
+# ------- Training settings -------
+cmd="$cmd --max_train_epochs 100"
+cmd="$cmd --save_every_n_epochs 1"
+cmd="$cmd --save_state"
+#cmd="$cmd --resume /home/AiDraw/sd-scripts/lora/yuiri_flux_beta1-000090-state"
+#cmd="$cmd --optimizer_args relative_step=True scale_parameter=True warmup_init=True"
+
+# ------- Sampling settings (commented out, can enable by uncommenting) -------
+# cmd="$cmd --sample_every_n_epochs 10"
+# cmd="$cmd --sample_sampler heun"
+# cmd="$cmd --sample_prompts /path/to/prompts_file.txt"
+
+# ------- Other parameter settings -------
+cmd="$cmd --cache_latents"
+cmd="$cmd --cache_text_encoder_outputs"
+cmd="$cmd --cache_text_encoder_outputs_to_disk"
+cmd="$cmd --save_model_as safetensors"
+cmd="$cmd --sdpa"
+#cmd="$cmd --xformers"   # Uncomment to enable xformers
+cmd="$cmd --persistent_data_loader_workers"
+cmd="$cmd --max_data_loader_n_workers 2"
+cmd="$cmd --seed 1819279755"
+cmd="$cmd --gradient_checkpointing"
+cmd="$cmd --mixed_precision bf16"
+cmd="$cmd --save_precision bf16"
+cmd="$cmd --full_bf16"  # Uncomment to enable full_fp16
+#cmd="$cmd --fp8_base"
+cmd="$cmd --network_module networks.lora_flux"
+cmd="$cmd --network_train_unet_only"
+cmd="$cmd --optimizer_type adamw8bit"
+cmd="$cmd --learning_rate 1.6e-3"
+cmd="$cmd --network_dim 16"
+cmd="$cmd --network_alpha 1"
+cmd="$cmd --network_args 'conv_dim=16' 'conv_alphas=1' 'block_lr_zero_threshold=0.1' 'down_lr_weight=sine-.5' 'mid_lr_weight=2' 'up_lr_weight=cosine+1'"
+# cmd="$cmd --lowram"   # Uncomment to enable lowram
+# ------- fluxd parameters -------
+cmd="$cmd --timestep_sampling shift"
+cmd="$cmd --discrete_flow_shift 3.1582"
+cmd="$cmd --model_prediction_type raw"
+cmd="$cmd --guidance_scale 1.0"
+
+# ------- Test parameters (commented out, can enable by uncommenting) -------
+cmd="$cmd --flip_aug"
+# cmd="$cmd --face_crop_aug_range 2,4"
+
+source /home/vipuser/miniconda3/bin/activate /home/vipuser/miniconda3/envs/sd-scripts
+
+# Execute the final command
+$cmd >log.log 2>&1 &
+#$cmd
