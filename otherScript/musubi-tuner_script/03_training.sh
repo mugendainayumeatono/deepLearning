@@ -1,4 +1,5 @@
 source /home/vipuser/miniconda3/bin/activate /home/vipuser/miniconda3/envs/diffusion-pipe
+source 00_config.sh
 export CUDA_HOME=/usr/local/cuda
 
 cmd="accelerate launch"
@@ -7,7 +8,7 @@ cmd="$cmd --mixed_precision bf16"
 cmd="$cmd musubi-tuner/wan_train_network.py"
 cmd="$cmd --task i2v-14B"
 cmd="$cmd --dit /home/hdd1/comfyUI/ComfyUI/models/diffusion_models/confyui-org/wan2.1_i2v_480p_14B_bf16.safetensors"
-cmd="$cmd --dataset_config /home/hdd1/musubi-tuner/resource/dataset.toml"
+cmd="$cmd --dataset_config $DATA_SET_PATH"
 cmd="$cmd --sdpa"
 #cmd="$cmd --flash-attn"
 #cmd="$cmd --split_attn"
