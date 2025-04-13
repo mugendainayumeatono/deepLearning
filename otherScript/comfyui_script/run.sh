@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 source /home/vipuser/miniconda3/bin/activate /home/vipuser/miniconda3/envs/comfyui_other
 

@@ -1,4 +1,4 @@
-source /home/vipuser/miniconda3/bin/activate /home/vipuser/miniconda3/envs/diffusion-pipe
+source /home/vipuser/miniconda3/bin/activate /home/vipuser/miniconda3/envs/musubi-tuner
 source 00_config.sh
 
 cmd="python musubi-tuner/wan_cache_text_encoder_outputs.py"
