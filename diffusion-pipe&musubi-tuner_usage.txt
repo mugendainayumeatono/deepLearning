@@ -1,0 +1,91 @@
+##训练框架有2个
+https://github.com/tdrussell/diffusion-pipe
+https://github.com/kohya-ss/musubi-tuner
+
+##训练数据准备
+diffusion-pipe & musubi-tuner 都适用、
+
+I2V训练必须使用视频，否则报错
+训练数据支持绝大多数视频格式，不同格式可以混在一起，不用区分格式
+每个文件训练文件都要对应有一个同名的txt文件，这个文件需要描述被训练视频的内容
+暂时没看见自动生成描述视频的方法，考虑手动写txt文件，全部的视频的txt文件都同样的一段话或者一个词应可以
+
+##diffusion-pipe
+
+安装位置
+/home/hdd1/diffusion-pipe
+
+###准备训练数据
+和sd-script一样，要准备一个dataset.tom
+参考
+https://github.com/tdrussell/diffusion-pipe/blob/main/examples/dataset.toml
+/home/hdd1/diffusion-pipe/resoure/resource_test_1/dataset.toml 
+
+主要设置点
+设定训练数据的路径，视频文件和txt文件放在一起就可以了，其余的可以保持默认
+[[directory]]
+# Path to directory of images/videos, and corresponding caption files. The caption files should match the media file name, but with a .txt extension.
+# A missing caption file will log a warning, but then just train using an empty caption.
+path = '/home/hdd1/diffusion-pipe/resoure/resource_test_1'
+
+----
+###准备训练数据配置文件
+参考
+https://github.com/tdrussell/diffusion-pipe/blob/main/examples/hunyuan_video.toml
+/home/hdd1/diffusion-pipe/config/yama_beta1.toml
+
+主要设定点，指定生成的lora保存的位置，和dataset的路径
+# Output path for training runs. Each training run makes a new directory in here.
+output_dir = '/home/hdd1/diffusion-pipe/output'
+
+# Dataset config file.
+dataset = '/home/hdd1/diffusion-pipe/resoure/resource_test_1/dataset.toml'
+
+其余优化选项可以不用改，参考yama_beta1.toml里面的注释
+
+###开始训练
+注意区分dataset.tom和yama_beta1.toml
+dataset.tom        是数据集配置
+yama_beta1.toml是训练参数配置
+只要把yama_beta1.toml作为参数传递给train.py
+
+run.sh里面--config config/yama_beta1.toml 替换成前面准备好的配置文件的路径
+
+参数带上 --resume_from_checkpoint "20250212_07-06-40" 可以从断点继续训练
+
+正式训练前会先自动做缓存，每个数据集缓存只生成一次，之后自动使用上次生成的缓存，所以如果数据集有发生变动，要更新缓存
+run.sh里面加上参数 --regenerate_cache
+或者把/home/hdd1/diffusion-pipe/resoure/resource_test_1/cache文件夹整个删了也行
+
+
+================================================
+##musubi-tuner
+
+###安装路径
+/home/hdd1/musubi-tuner
+
+###dataset
+基本和sd-script接近，参考
+https://github.com/kohya-ss/musubi-tuner/blob/main/dataset/dataset_config.md
+/home/hdd1/musubi-tuner/resource/resource_test_3/dataset.toml 
+
+主要设定点
+video_directory = "/home/hdd1/musubi-tuner/resource/resource_test_3"  指定训练文件路径
+cache_directory = "/home/hdd1/musubi-tuner/resource/resource_test_3/cache" 指定缓存保存的路径
+max_frames = 49 指定一个视频里面前多少帧拿出来训练，如果训练帧数太多会爆显存
+
+训练素材同diffusion-pipe，视频文件和txt文件都放video_directory下面就可以了
+
+###训练
+修改03_training.sh 的最后面
+cmd="$cmd --output_dir /home/hdd1/musubi-tuner/output" 指定训练结果保存的位置
+cmd="$cmd --output_name yami_vioed_beta1.lora" 指定训练结果的文件名
+
+然后执行lanch.sh就行
+
+这个脚本会按顺序执行
+01_make_cache.sh          用于生成视频的缓存
+02_make_cache_text.sh   用于生成描述信息的缓存
+03_training.sh                开始训练
+
+如果训练数据有变动，最好把缓存全删了再重新训练
