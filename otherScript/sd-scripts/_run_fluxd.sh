@@ -12,13 +12,13 @@ cmd="$cmd --pretrained_model_name_or_path /home/hdd1/comfyUI/ComfyUI/models/chec
 cmd="$cmd --clip_l /home/hdd1/comfyUI/ComfyUI/models/clip/CLIP_sd3/clip_l.safetensors"
 cmd="$cmd --t5xxl /home/hdd1/comfyUI/ComfyUI/models/clip/CLIP_sd3/t5xxl_fp8_e4m3fn.safetensors"
 cmd="$cmd --ae /home/hdd1/comfyUI/ComfyUI/models/vae/ae.safetensors"
-cmd="$cmd --dataset_config /home/hdd1/sd-scripts/resource/resource8_training_mask_image/dataset_flux.toml"
+cmd="$cmd --dataset_config /home/hdd1/sd-scripts/resource/resource10_training_hanfu/dataset_flux.toml"
 cmd="$cmd --output_dir /home/hdd1/sd-scripts/lora"
-cmd="$cmd --output_name yami_beta3_mask"
+cmd="$cmd --output_name hanfu_1"
 
 # ------- Training settings -------
 cmd="$cmd --max_train_epochs 100"
-cmd="$cmd --save_every_n_epochs 1"
+cmd="$cmd --save_every_n_epochs 2"
 cmd="$cmd --save_state"
 #cmd="$cmd --resume /home/AiDraw/sd-scripts/lora/yuiri_flux_beta1-000090-state"
 #cmd="$cmd --optimizer_args relative_step=True scale_parameter=True warmup_init=True"

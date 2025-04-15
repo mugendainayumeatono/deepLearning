@@ -81,14 +81,14 @@ if __name__ == "__main__":
     output_folder = "output"  # 替换为保存图片的文件夹路径
     frame_interval = 10  # 每隔 30 帧提取一张图片
 
-    #convert_jfif_to_jpeg(input_folder, output_folder, ".avif", ".jpeg")
-    #convert_jfif_to_jpeg(input_folder, output_folder, ".image", ".jpeg")
-    #convert_jfif_to_jpeg(input_folder, output_folder, ".jfif", ".jpeg")
-    #convert_jfif_to_jpeg(input_folder, output_folder, ".jpg", ".jpeg")
-    #convert_jfif_to_jpeg(input_folder, output_folder, ".png", ".jpeg")
-    #convert_jfif_to_jpeg(input_folder, output_folder, ".webp", ".jpeg")
-    #convert_jfif_to_jpeg(input_folder, output_folder, ".heic", ".jpeg")
+    convert_jfif_to_jpeg(input_folder, output_folder, ".avif", ".jpeg")
+    convert_jfif_to_jpeg(input_folder, output_folder, ".image", ".jpeg")
+    convert_jfif_to_jpeg(input_folder, output_folder, ".jfif", ".jpeg")
+    convert_jfif_to_jpeg(input_folder, output_folder, ".jpg", ".jpeg")
+    convert_jfif_to_jpeg(input_folder, output_folder, ".png", ".jpeg")
+    convert_jfif_to_jpeg(input_folder, output_folder, ".webp", ".jpeg")
+    convert_jfif_to_jpeg(input_folder, output_folder, ".heic", ".jpeg")
 
-    convert_jfif_to_jpeg(input_folder, output_folder, ".jpg", ".png")
+    #convert_jfif_to_jpeg(input_folder, output_folder, ".jpg", ".png")
 
     #extract_frames_from_videos(input_folder, output_folder, frame_interval)
