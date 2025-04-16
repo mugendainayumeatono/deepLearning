@@ -1,6 +1,7 @@
 from PIL import Image
 import pillow_avif
 import cv2
+import moviepy.editor as mp
 import os
 
 def extract_frames_from_videos(input_folder, output_folder, frame_interval=1):
@@ -55,6 +56,34 @@ def extract_frames_from_videos(input_folder, output_folder, frame_interval=1):
             video_capture.release()
             print(f"完成视频 {filename}: 共保存 {saved_count} 张图片到 {video_output_folder}")
 
+def convert_all_mov_to_mp4(input_folder, output_folder):
+    try:
+        # 如果输出文件夹不存在，创建它
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+        
+        # 遍历输入文件夹中的所有文件
+        for filename in os.listdir(input_folder):
+            if filename.lower().endswith('.mov'):
+                input_path = os.path.join(input_folder, filename)
+                # 将 .mov 替换为 .mp4 作为输出文件名
+                output_filename = os.path.splitext(filename)[0] + '.mp4'
+                output_path = os.path.join(output_folder, output_filename)
+                
+                print(f"正在处理: {filename}")
+                
+                # 加载 MOV 文件
+                video = mp.VideoFileClip(input_path)
+                
+                # 转换为 MP4 格式
+                video.write_videofile(output_path, codec="libx264", audio_codec="aac")
+                
+                # 释放资源
+                video.close()
+                print(f"转换成功: {output_path}")
+    except Exception as e:
+        print(f"转换 {filename} 时出错: {str(e)}")
+
 def convert_jfif_to_jpeg(input_folder, output_folder, intput_extension, output_extension):
     # 遍历输入文件夹中的所有文件
     for filename in os.listdir(input_folder):
@@ -92,3 +121,4 @@ if __name__ == "__main__":
     #convert_jfif_to_jpeg(input_folder, output_folder, ".jpg", ".png")
 
     #extract_frames_from_videos(input_folder, output_folder, frame_interval)
+    convert_all_mov_to_mp4(input_folder, output_folder)
