@@ -115,7 +115,9 @@ pip install --force-reinstall -v "triton==3.1.0"
 https://github.com/kohya-ss/musubi-tuner/blob/main/dataset/dataset_config.md
 
 ###训练
-如果训练的时候保存，考虑下面这个是不是加了
+如果训练的时候报错，考虑下面这个是不是加了
 If you train I2V models, add --clip path/to/models_clip_open-clip-xlm-roberta-large-vit-huge-14.pth
 clip要用wan2.1官方的，comfyui-org和kijia的都不可以
+
+训练的时候必须--fp8 否则爆显存 --blocks_to_swap', '36'也爆
 
