@@ -119,5 +119,24 @@ https://github.com/kohya-ss/musubi-tuner/blob/main/dataset/dataset_config.md
 If you train I2V models, add --clip path/to/models_clip_open-clip-xlm-roberta-large-vit-huge-14.pth
 clip要用wan2.1官方的，comfyui-org和kijia的都不可以
 
+
 训练的时候必须--fp8 否则爆显存 --blocks_to_swap', '36'也爆
+
+avr_loss=nan
+不知道发生了什么
+唯一有效的改善是做了，并且清除缓存
+没有用，还是nan
+(musubi-tuner) root@ubuntu22:/home/hdd1/musubi-tuner# accelerate config
+----------------------------------------------------------------------------------------------------------------------------------------------------In which compute environment are you running?
+This machine                                                                                                                                        
+----------------------------------------------------------------------------------------------------------------------------------------------------Which type of machine are you using?                                                                                                                
+No distributed training                                                                                                                             
+Do you want to run your training on CPU only (even if a GPU / Apple Silicon / Ascend NPU device is available)? [yes/NO]:NO                          
+Do you wish to optimize your script with torch dynamo?[yes/NO]:NO                                                                                   
+Do you want to use DeepSpeed? [yes/NO]: NO                                                                                                          
+What GPU(s) (by id) should be used for training on this machine as a comma-seperated list? [all]:all                                                
+Would you like to enable numa efficiency? (Currently only supported on NVIDIA hardware). [yes/NO]: NO                                               
+----------------------------------------------------------------------------------------------------------------------------------------------------Do you wish to use mixed precision?                                                                                                                 
+bf16                                                                                                                                                
+accelerate configuration saved at /root/.cache/huggingface/accelerate/default_config.yaml  
 

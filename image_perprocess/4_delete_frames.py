@@ -1,5 +1,42 @@
 import os
 import cv2
+def remove_first_n_frames(input_video, output_video, n_frames):
+    # 打开输入视频
+    cap = cv2.VideoCapture(input_video)
+    if not cap.isOpened():
+        print("无法打开视频文件")
+        return
+    
+    # 获取视频属性
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    
+    if n_frames >= total_frames:
+        print("要删除的帧数大于视频总帧数")
+        cap.release()
+        return
+    
+    # 设置输出视频
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 视频编码格式
+    out = cv2.VideoWriter(output_video, fourcc, fps, (width, height))
+    
+    # 跳过前 N 帧
+    for _ in range(n_frames):
+        cap.read()  # 读取并丢弃帧
+    
+    # 读取并写入剩余帧
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        out.write(frame)
+    
+    # 释放资源
+    cap.release()
+    out.release()
+    print(f"已删除前 {n_frames} 帧，输出视频保存为 {output_video}")
 
 def remove_last_n_frames(input_video_path, output_video_path, n_frames):
     # 打开视频文件
@@ -44,10 +81,11 @@ def remove_frames_in_directory(input_directory, output_directory, n_frames):
             print(f"正在处理: {input_path}")
 
             # 调用缩放函数
-            remove_last_n_frames(input_path, output_path, n_frames)
+            #remove_last_n_frames(input_path, output_path, n_frames)
+            remove_first_n_frames(input_path, output_path, n_frames)
 
 # 使用示例
 input_directory = "input"  # 替换为你的输入文件夹路径
 output_directory = "output"  # 替换为你的输出文件夹路径
-remove_framse = 24
+remove_framse = 32
 remove_frames_in_directory(input_directory, output_directory, remove_framse) 

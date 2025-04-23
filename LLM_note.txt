@@ -1,22 +1,143 @@
+# RAG工具
+
+目前能开箱即用的基本上有下面2个，其余还有一些框架，要用的话需要自己写UI
+
+* RAGFlow
+* anythingllm
+
+### 工具原理
+
+#### 需要使用到3种模型
+
+1.LLM  
+deepseek,chatGPT等
+
+2.embedded  
+这个模型用来判断2个词或句子之间的相似程度  
+基本上就是一个模糊查找的查找引擎  
+
+这个有排行
+>https://huggingface.co/spaces/mteb/leaderboard
+
+RAG工具知识库检索质量好坏，主要受这个模型影响   
+建议使用模型：   
+* gemini-embedding-exp-03-07(不可本地部署，要给google交API使用费)  
+* gte-Qwen2-7B-instruct (本地部署需要显存29G)  
+* multilingual-e5-large-instruct (本地部署只要1G显存)
+
+3.Rerank(可选)
+用于对embedded模型处理后的结果进行重新排序，有可能取得比只用embedded更好的结果，也有可能没什么用  
+Rerank模型可选的不多，常用的就这一个
+
+* bge-reranker-large
+
+#### 需要使用到一个专用的向量数据库  
+
+RAGFlow和anythingllm均有内置的向量数据库，数据量不大的话用内置的足够用  
+如果数据量非常大，或者有特殊的数据管理需求，几个系统之间要共享同一个数据库之类的需求  
+可以考虑专门搭建向量数据库服务器
+
+常用的向量数据库有
+* chroma
+* Milvus
+* Weaviate
+
+以上数据库全开源，可以本地部署使用
+
+* zilliz
+
+这个是Milvus的云版本，数据库在云上，由服务商zilliz提供服务(要付费)
+
+
+#### 工作流程
+
+例如
+```
+知识库里面有如下文档，这些文档经过处理然后，保存在向量数据库里面
+1. 植物养殖方法
+2. 动物喂养方法
+3. 宠物的喂养方法
+4. 狗的喂养方法
+
+用户提问如何养猫
+
+AI首先通过embedded模型判断【猫】和知识库里面内容的相似程度
+
+embedded模型可能的判断结果如下，越相似的排在前面
+动物喂养方法
+宠物的喂养方法
+狗的喂养方法
+
+于是AI根据排名，把【动物喂养方法】传递给LLM模型
+
+LLM模型负责整理 【动物喂养方法】中的内容，显示给用户
+
+
+有使用Rerank模型的时候
+Rerank模型会对结果重新排序，排序结果可能变成
+宠物的喂养方法
+动物喂养方法
+狗的喂养方法
+
+于是【宠物的喂养方法】被显示给用户
+```
+
+## 对比训练lora的优点
+
+把知识库拿去训练出一个lora其实可以达到和RAG相同的效果  
+但是使用RAG的方法，知识库随时可以改，立即生效  
+loar的话修改知识库需要重新训练lora，重新部署lora  
+
+# MCP 和 agent
+
+https://github.com/modelcontextprotocol/servers
+
+MCP用途
+
+MCP一头通过提示词连接LLM模型，另一头通过一个既存系统(如oa)的API，连接既存系统
+
+把这个MCP注册给anythingllm等AI应用  
+并且给AI模型写提示词，告诉AI遇到什么情况，可以使用这个接口  
+LLM模型在分析问题的时候，遇到提示词提到的情况，就会调用MCP接口去操作既存系统
+
+例如：  
+提示词写：用户提到“今天的日期”的时候，调用【get_current_time】接口
+之后用户和AI聊天的时候是要说到 “今天的日期” AI就会自动调用【get_current_time】取得当前日期，并返回给用户
+
+agent
+类似workflow，用于把一系列小工具串起来，实现一些功能  
+例如：  
+在anythingllm里面注册一个外部工具【get url】，用于从网页取得数据  
+然后创建一个agent，工作流程如下  
+1. 给LLM模型写提示词：用户提到“今天的天气”的时候调用这个工作流  
+2. 用调用【get url】工具结果保存在{weather}变量里面  
+3. 把{weather}传递给LLM模型处理，并将结果返回给用户
+4. 可以根据需要继续添加处理
+
+之后用户只要在聊天的时候提到天气，AI就会从特定URL取得天气并返回给用户
+
+# 部署RAG工具
+
+## 本地部署deeseek
 https://github.com/sgl-project/sglang/tree/main/benchmark/deepseek_v3
 
-安装容器工具
+### 安装容器工具
+#### 使用容器需要安装nvidia的驱动
 
 红帽系
-使用容器需要安装nvidia的驱动
-curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
-  sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
-sudo yum install -y nvidia-container-toolkit
+>curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
+>sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+>sudo yum install -y nvidia-container-toolkit
 
 乌班图
-curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
-  && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
-    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
-sudo apt-get update
-sudo apt-get install -y nvidia-container-toolkit
+>curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/>nvidia-container-toolkit-keyring.gpg \
+>  && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+>    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+>    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+>sudo apt-get update
+>sudo apt-get install -y nvidia-container-toolkit
 
-测试驱动是否安装成功
+##### 测试驱动是否安装成功
 sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
 >能显示驱动版本
 
@@ -25,19 +146,28 @@ nvidia-ctk cdi list
 
 podman run --rm --device nvidia.com/gpu=all --security-opt=label=disable lmsysorg/sglang:latest nvidia-smi
 >能列出GPU使用情况
+
 docker run --rm --gpus all nvidia/cuda:11.0.3-base-ubuntu20.04 nvidia-smi
->乌班图使用
+>乌班图使用上面这个命令列出GPU使用情况
 
-启动：
+### 启动：
+1.5B
+```
+docker run --rm --gpus all -p 5000:30000 -v /home/mickey/LLM/deepseek/.cache/huggingface:/root/.cache/huggingface --ipc=host lmsysorg/sglang:latest python3 -m sglang.launch_server --model-path /root/.cache/huggingface/DeepSeek-R1-Distill-Qwen-1.5B --tp 1 --trust-remote-code --port 30000
+```
 
-docker run --gpus all --shm-size 32g -p 30000:30000 -v ~/.cache/huggingface:/root/.cache/huggingface --ipc=host lmsysorg/sglang:latest \
-    python3 -m sglang.launch_server --model deepseek-ai/DeepSeek-V3 --tp 8 --trust-remote-code --port 30000
+8B
+```
+docker run --rm --gpus all -p 5000:30000 -v /home/mickey/LLM/deepseek/.cache/huggingface:/root/.cache/huggingface --ipc=host lmsysorg/sglang:latest python3 -m sglang.launch_server --model-path /root/.cache/huggingface/DeepSeek-R1-Distill-Llama-8B --tp 1 --trust-remote-code --port 30000
+```
+
+14B
+```
+docker run --rm --gpus all -p 5000:30000 -v /home/hdd1/LLM/deepSeek/deepSeekCache:/root/.cache/huggingface --ipc=host lmsysorg/sglang:latest python3 -m sglang.launch_server --model-path /root/.cache/huggingface/DeepSeek-R1-Distill-Qwen-14B --tp 1 --trust-remote-code --port 30000
+```
 
 报ipc host模式不能修改 shm-size 删除--shm-size 32g后容器成功启动
 
---model deepseek-ai/DeepSeek-V3 指定huggingfaces上面的目录
-如果是docker内部，因为用的python代码下载模型，所有无法使用代理
-考虑用下面--model-path的方法
 --model-path 指定一个本地路径，指定到目录就可以，不用指定文件名
 git clone下载huggingfaces上面的模型到本地
 除了模型文件外，config 等配置文件也要下载
@@ -45,40 +175,140 @@ git clone下载huggingfaces上面的模型到本地
 需要把容器外的模型路径映射到容器内部
 --tp 1 指定GPU核心数，如果指定的比实际有的核心数多，会报错找不到核心
 
-以下能正常启动
-docker run --rm --gpus all -p 5000:30000 -v /home/mickey/LLM/deepseek/.cache/huggingface:/root/.cache/huggingface --ipc=host lmsysorg/sglang:latest python3 -m sglang.launch_server --model-path /root/.cache/huggingface/DeepSeek-R1-Distill-Qwen-1.5B --tp 1 --trust-remote-code --port 30000
-docker run --rm --gpus all -p 5000:30000 -v /home/mickey/LLM/deepseek/.cache/huggingface:/root/.cache/huggingface --ipc=host lmsysorg/sglang:latest python3 -m sglang.launch_server --model-path /root/.cache/huggingface/DeepSeek-R1-Distill-Llama-8B --tp 1 --trust-remote-code --port 30000
-docker run --rm --gpus all -p 5000:30000 -v /home/hdd1/LLM/deepSeek/deepSeekCache:/root/.cache/huggingface --ipc=host lmsysorg/sglang:latest python3 -m sglang.launch_server --model-path /root/.cache/huggingface/DeepSeek-R1-Distill-Qwen-14B --tp 1 --trust-remote-code --port 30000
+--model deepseek-ai/DeepSeek-V3 指定huggingfaces上面的目录
+如果访问huggingfaces不用翻墙也可以用--model替代--model-path
+--model指定模型后，sglang会自动下载模型
 
+-----------------------------------------------
 
-wsl2环境
+### wsl2环境
 docker使用端口映射网络，windows或者其他远程主机都无法访问到映射出来的端口，只有在wsl2内可以访问映射出来的端口
 所以需要多加一层端口转发ncat --sh-exec "ncat 127.0.0.1 5000" -l 5001  --keep-open
-???	待调查，必须用普通用户执行，用roor用户执行会导致wsl2 无法访问到5000端口
+** 存疑，必须用普通用户执行ncat，用roor用户执行会导致wsl2 无法访问到5000端口
 修改tcpkeepalive，auth
 --quantization fp8  --mem-fraction-static
 
-不使用容器，必须使用python3.10
-# Installation
-pip install "sglang[all]>=0.4.1.post5" --find-links https://flashinfer.ai/whl/cu124/torch2.4/flashinfer
+-----------------------------------------------
 
-# Launch
-python3 -m sglang.launch_server --model deepseek-ai/DeepSeek-V3 --tp 8 --trust-remote-code
+### 不使用docker
+不使用容器安装sglang，必须使用python3.10
+#### Installation
+>pip install "sglang[all]>=0.4.1.post5" --find-links https://flashinfer.ai/whl/cu124/torch2.4/flashinfer
+
+#### Launch
+>python3 -m sglang.launch_server --model deepseek-ai/DeepSeek-V3 --tp 8 --trust-remote-code
 
 这种方法多个python版本共存的时候会有问题
-_sqllite3.so这个库，需要通过yum 安装sqllite3-devel包，但是安装的版本会是linux发行版默认python版本对应的so文件，至少python3.9和python3.10的so文件不兼容，直接用3.9的so文件会段错误
-应该是需要从源代码从新编译python310,configure的时候加编译选项，把310版的so文件编译出来
+sglang依赖sqllite3.so这个库，需要通过yum 安装sqllite3-devel包
+红帽9 默认python 版本python3.9，通过yum安装的sqllite3.so，只支持python3.9
+python3.10使用python3.9的sqllite3.so文件会段错误
+解决方法：
+从源代码从新编译python310,configure的时候加编译选项，把310版的sqllite3.so文件编译出来
 
-
-
+-----------------------------------------------
+# open-webui  deeseek的webui
 https://github.com/open-webui/open-webui
-sudo docker run -d --net=bridge -e OPENAI_API_KEY="EMPTY" -v /home/mickey/LLM/open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main
 
+### 使用docker
+不需要手动下载docker镜像直接执行如下命令
+
+```
 docker run -d -p 8081:8080 -e GLOBAL_LOG_LEVEL="DEBUG" -v /home/mickey/LLM/open-webui-debug:/app/backend/data --name open-webui-debug --restart always ghcr.io/open-webui/open-webui:main
+```
 
 容器能正常启动，端口映射应改为-p 8080 8080，8080端口上可以得到一个web页面
 api接口的URL在web画面内设置
 
 
+-----------------------------------------------
+## anything-llm
 
-DeepSeek-R1-Distill-Qwen-14B 跑不动
+https://github.com/Mintplex-Labs/anything-llm
+
+### 安装
+docker pull mintplexlabs/anythingllm
+
+### 配置
+假定工作目录是 $STORAGE_LOCATION
+1. 再工作目录下面放一个.env文件，内容参考下面文件
+    参考 https://github.com/Mintplex-Labs/anything-llm/blob/master/server/.env.example
+
+最基本的有这4行就可以了
+>SERVER_PORT=3001
+>JWT_SECRET="my-random-string-for-seeding" # Please generate random string at least 12 chars long.
+>SIG_KEY='passphrase' # Please generate random string at least 32 chars long.
+>SIG_SALT='salt' # Please generate random string at least 32 chars long.
+
+2. 放置SQLite DB文件
+>touch $STORAGE_LOCATION/anythingllm.db
+
+注意文件的权限，应该是777，$STORAGE_LOCATION的权限也应该是777 否则无法启动
+
+### 启动
+
+```
+export STORAGE_LOCATION=/home/hdd1/LLM/anything-llm && \
+mkdir -p $STORAGE_LOCATION && \
+touch "$STORAGE_LOCATION/.env" && \
+docker run --rm -d -p 8804:3001 \
+--cap-add SYS_ADMIN \
+-v ${STORAGE_LOCATION}:/app/server/storage \
+-v ${STORAGE_LOCATION}/.env:/app/server/.env \
+-e STORAGE_DIR="/app/server/storage" \
+mintplexlabs/anythingllm
+```
+
+### 配置
+如果使用local AI
+本地环回地址应该写
+http://172.17.0.1:30000/v1
+而非
+http://127.0.0.1:30000/v1
+
+通过在服务器或 docker 的 .env 设置中将 DISABLE_TELEMETRY 设置为 “true” 来选择退出 Telemetry 远程信息收集功能。
+
+#### 启用上网搜索功能
+
+https://www.searchapi.io
+key: gAWRzhTngqb4kZ1ofd1Kk4L3
+但是只能免费用100次 --> 垃圾
+
+https://app.tavily.com/home
+key: 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
+每个月免费搜索1000次
+
+开发
+apikey
+RYDVADM-T5K4TMA-H0QQ0V9-46GQ64S
+
+
+-----------------------------------------------
+## 嵌入模型 Embeddings
+
+功能接近搜索引擎，主要用于分析2个句子或词之间的相似程度
+
+### 排行
+https://huggingface.co/spaces/mteb/leaderboard
+
+###推理框架
+https://github.com/michaelfeil/infinity
+
+hugging上面的模型都可以用这个框架推理
+
+### 启动
+```
+docker run --rm -it --gpus all -v $PWD/data:/app/.cache -p 7997:7997 \
+-v $PWD/models:/models \
+michaelf34/infinity:0.0.68 \
+v2 --model-id /models/multilingual-e5-large-instruct --revision "main" --dtype float16 --batch-size 32 --engine torch --port 7997 \
+--url-prefix "/v1"
+```
+
+不用git pull，自动下载依赖的镜像
+--model-id 可以指定hugging上面的模型，自动下载
+   也可以指定本地服务器上面的路径，使用下载好的本地模型
+* 使用本地模型的时候，可能需要-v $PWD/models:/models 把容器外模型保存地址映射进去
+如果要使用openAI兼容接口，参数应该带上--url-prefix "/v1"
+
+*不带--url-prefix "/v1"     infinity 提供接口的url是  http://0.0.0.0:7997/models  
+*带--url-prefix "/v1"        infinity 提供接口的url是  http://0.0.0.0:7997/v1/models  
