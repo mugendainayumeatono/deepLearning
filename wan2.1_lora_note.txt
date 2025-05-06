@@ -78,5 +78,36 @@ https://civitai.com/models/1360349/particalize-i2v-lora?modelVersionId=1538431
 提示词：什么 is disintegrating or turning into 什么 （“什么”要根据你的需求替换）
 如果你想做颗粒化那就用权重1.0，如果你想更加有创意那么就用权重0.4-0.5（看我的post那个变成小面包的dio）
 
+flux
+=================================
+https://civitai.com/models/796382/ultrarealistic-lora-project?modelVersionId=1026423
+amateurish photo
+low lighting
+in motion
+overexposed
+underexposed
+GoPro lens
+eerie atmosphere
+smeared background
+smeared foreground
 
+https://civitai.com/models/631986/xlabs-flux-realism-lora?modelVersionId=706528
+none
 
+https://civitai.com/models/970862/improved-amateur-snapshot-photo-realism-style-lora-flux-spectrum0001-by-aicharacters?modelVersionId=1434002
+early 2010s snapshot photo captured with a phone and saved as IMG_2018.CR2,
+
+https://civitai.com/models/726732/realistic-people-photograph-flux?modelVersionId=914408
+aidmaRealisticPeoplePhotograph
+
+https://civitai.com/models/652699/amateur-photography-flux-dev?modelVersionId=993999
+none
+
+https://civitai.com/models/261404/extremely-muscular-woman?modelVersionId=786275
+muscular woman
+
+https://civitai.com/models/61099/fluxpony-perfect-full-round-breasts-and-slim-waist?modelVersionId=723657
+busty breasts
+nipples
+massively huge breasts
+anime, anime style

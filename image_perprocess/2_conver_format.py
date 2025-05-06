@@ -98,6 +98,13 @@ def convert_jfif_to_jpeg(input_folder, output_folder, intput_extension, output_e
                 output_filename = os.path.splitext(filename)[0] + output_extension
                 output_path = os.path.join(output_folder, output_filename)
                 
+                if(intput_extension == ".png"):
+                    white_background = Image.new("RGB", img.size, (255, 255, 255))
+                    # 如果 PNG 图像有透明通道（RGBA），将图像粘贴到白色背景上
+                    if img.mode == "RGBA":
+                        white_background.paste(img, (0, 0), img)
+                        img = white_background
+
                 # 将图像保存为 .jpeg 格式
                 if(output_extension == ".jpeg"):
                     img.convert("RGB").save(output_path, "JPEG")
