@@ -81,6 +81,8 @@ https://civitai.com/models/1360349/particalize-i2v-lora?modelVersionId=1538431
 flux
 =================================
 https://civitai.com/models/796382/ultrarealistic-lora-project?modelVersionId=1026423
+UltraRealPhoto.safetensors 
+
 amateurish photo
 low lighting
 in motion
@@ -92,21 +94,30 @@ smeared background
 smeared foreground
 
 https://civitai.com/models/631986/xlabs-flux-realism-lora?modelVersionId=706528
+flux_realism_lora.safetensors
+
 none
 
 https://civitai.com/models/970862/improved-amateur-snapshot-photo-realism-style-lora-flux-spectrum0001-by-aicharacters?modelVersionId=1434002
+Improved Amateur Snapshot Photo Realism
+
 early 2010s snapshot photo captured with a phone and saved as IMG_2018.CR2,
 
 https://civitai.com/models/726732/realistic-people-photograph-flux?modelVersionId=914408
+aidmaRealisticPeoplePhotograph-FLUX-V0.2.safetensors
 aidmaRealisticPeoplePhotograph
 
 https://civitai.com/models/652699/amateur-photography-flux-dev?modelVersionId=993999
+amateurphoto-v6-forcu.safetensors
+
 none
 
 https://civitai.com/models/261404/extremely-muscular-woman?modelVersionId=786275
 muscular woman
 
 https://civitai.com/models/61099/fluxpony-perfect-full-round-breasts-and-slim-waist?modelVersionId=723657
+bustyFC-2.1.safetensors
+
 busty breasts
 nipples
 massively huge breasts
