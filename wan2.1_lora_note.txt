@@ -83,33 +83,31 @@ flux
 https://civitai.com/models/796382/ultrarealistic-lora-project?modelVersionId=1026423
 UltraRealPhoto.safetensors 
 
-amateurish photo
-low lighting
-in motion
-overexposed
-underexposed
-GoPro lens
-eerie atmosphere
+amateurish photo 画风偏黄
+low lighting 减少了光照效果，变的看不出光源，0.3效果还行，0.5感觉背景变暗了，但是人物很亮
+in motion 效果不太好
+overexposed 果然过曝就是非主流风格
+underexposed 0.5 大概1/5的图效果不错
+GoPro lens 变成自拍角度，影响背景变成基本是室内，0.5效果感觉还行，0.3不行
+eerie atmosphere 环境偏暗，有点阴森的感觉
 smeared background
-smeared foreground
+smeared foreground 0.5效果不错，接近low lighting 0.3,
 
 https://civitai.com/models/631986/xlabs-flux-realism-lora?modelVersionId=706528
-flux_realism_lora.safetensors
-
+flux_realism_lora.safetensors 还是保留了关照效果
 none
 
 https://civitai.com/models/970862/improved-amateur-snapshot-photo-realism-style-lora-flux-spectrum0001-by-aicharacters?modelVersionId=1434002
-Improved Amateur Snapshot Photo Realism
-
+Improved Amateur Snapshot Photo Realism画面过曝，垃圾
 early 2010s snapshot photo captured with a phone and saved as IMG_2018.CR2,
 
+
 https://civitai.com/models/726732/realistic-people-photograph-flux?modelVersionId=914408
-aidmaRealisticPeoplePhotograph-FLUX-V0.2.safetensors
+aidmaRealisticPeoplePhotograph-FLUX-V0.2.safetensors 好像还行，不影响背景，抑制了高光
 aidmaRealisticPeoplePhotograph
 
 https://civitai.com/models/652699/amateur-photography-flux-dev?modelVersionId=993999
-amateurphoto-v6-forcu.safetensors
-
+amateurphoto-v6-forcu.safetensors 垃圾
 none
 
 https://civitai.com/models/261404/extremely-muscular-woman?modelVersionId=786275
