@@ -486,6 +486,41 @@ key: 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
 apikey
 RYDVADM-T5K4TMA-H0QQ0V9-46GQ64S
 
+-----------------------------------------------
+# ragflow
+
+## 格式支持情况
+格式|向量转换|预览
+----|-------|----------------------------------------
+ppt |x      |x
+pptx|o      |o
+xls |o      |x 有预览按钮，但是无法正常显示
+xlsx|o      |o
+doc |o      |x
+docx|o      |x
+pdf |o      |o
+
+bug1：文件上传后可能不能移动文件夹，否则会出现在文件管理那边正常显示，但是把文件连接到知识库以后，能显示正常连接
+但是实际文件管理那边文件无法预览，预览页面会出错，知识库那边无法解析成向量数据
+
+bug2: 先删除文件，再删除对应向量数据，会报错导致向量数据删除不掉，只能删除整个知识库
+
+注意1: excal表，不能有2列标题一样，下面这样的表不行
+项目|价格|项目|价格
+---|----|----|------------------------------------
+1  |10  |2   |20
+
+## 重新生成dockers容器
+git clone https://github.com/infiniflow/ragflow.git
+cd ragflow/
+uv run download_deps.py --china-mirrors
+docker build -f Dockerfile.deps -t infiniflow/ragflow_deps .
+docker build --build-arg LIGHTEN=1 -f Dockerfile -t infiniflow/ragflow:nightly-slim .
+
+问题
+报 GPG error: http://archive.ubuntu.com/ubuntu jammy-backports InRelease: At least one invalid signature was encountered.
+解决
+手动 apt update
 
 -----------------------------------------------
 ## 嵌入模型 Embeddings
